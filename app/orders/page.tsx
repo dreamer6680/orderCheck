@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { ChevronRight, Plus, Search, Filter, Eye, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,46 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
-
-const mockOrders = [
-  {
-    id: 1,
-    orderNo: 'SO-20260918024',
-    customerName: '杭州云川贸易有限公司',
-    status: 'PENDING_CHECK',
-    statusLabel: '待核查',
-    items: [{ sku: 'AL-CN-024', name: '铝合金连接件', quantity: 240 }],
-    createdAt: '2026-09-18 10:42',
-  },
-  {
-    id: 2,
-    orderNo: 'SO-20260918023',
-    customerName: '上海远洋工业',
-    status: 'PENDING_OUTBOUND',
-    statusLabel: '待出库',
-    items: [{ sku: 'SS-BL-120', name: '不锈钢螺栓', quantity: 1200 }],
-    createdAt: '2026-09-18 09:18',
-  },
-  {
-    id: 3,
-    orderNo: 'SO-20260918021',
-    customerName: '宁波精工制造',
-    status: 'ABNORMAL',
-    statusLabel: '异常',
-    items: [{ sku: 'SE-PA-086', name: '密封圈套装', quantity: 86 }],
-    createdAt: '2026-09-17 16:36',
-    exceptionReason: '库存不足：密封圈套装 需要86件，可用库存仅42件',
-  },
-  {
-    id: 4,
-    orderNo: 'SO-20260918019',
-    customerName: '苏州新材料科技',
-    status: 'COMPLETED',
-    statusLabel: '已完成',
-    items: [{ sku: 'CF-FL-048', name: '碳钢法兰', quantity: 48 }],
-    createdAt: '2026-09-17 14:05',
-  },
-]
+import { api } from '@/lib/api/client'
+import type { OrderResponse, ProductResponse } from '@/lib/api/generated'
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -69,16 +31,66 @@ function StatusBadge({ status }: { status: string }) {
 export default function OrdersPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
-  const [selectedOrder, setSelectedOrder] = useState<typeof mockOrders[0] | null>(null)
+  const [orders, setOrders] = useState<OrderResponse[]>([])
+  const [products, setProducts] = useState<ProductResponse[]>([])
+  const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [customerName, setCustomerName] = useState('')
+  const [productId, setProductId] = useState('')
+  const [quantity, setQuantity] = useState('1')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const filteredOrders = useMemo(() => {
-    return mockOrders.filter((order) => {
-      const matchesSearch = `${order.orderNo}${order.customerName}`.toLowerCase().includes(search.toLowerCase())
-      const matchesStatus = statusFilter === 'ALL' || order.status === statusFilter
-      return matchesSearch && matchesStatus
-    })
+  const loadOrders = async () => {
+    setLoading(true)
+    try {
+      const data = await api.listOrders({
+        keyword: search || undefined,
+        status: statusFilter === 'ALL' ? undefined : statusFilter as 'PENDING_CHECK' | 'PENDING_OUTBOUND' | 'COMPLETED' | 'ABNORMAL' | 'CANCELLED',
+      })
+      setOrders(data)
+      setError('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '订单加载失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadOrders(), 250)
+    return () => window.clearTimeout(timer)
   }, [search, statusFilter])
+
+  useEffect(() => {
+    api.listProducts().then(setProducts).catch(() => setProducts([]))
+  }, [])
+
+  const filteredOrders = useMemo(() => orders, [orders])
+
+  const createOrder = async () => {
+    const selectedProductId = Number(productId)
+    const orderedQuantity = Number(quantity)
+    if (!customerName.trim() || !selectedProductId || orderedQuantity <= 0) return
+    await api.createOrder({
+      customerName: customerName.trim(),
+      items: [{ productId: selectedProductId, orderedQuantity }],
+    })
+    setIsCreateOpen(false)
+    setCustomerName('')
+    setProductId('')
+    setQuantity('1')
+    await loadOrders()
+  }
+
+  const runOrderAction = async (action: 'check' | 'recheck' | 'cancel', order: OrderResponse) => {
+    if (!order.id) return
+    if (action === 'check') await api.checkOrder(order.id)
+    if (action === 'recheck') await api.recheckOrder(order.id)
+    if (action === 'cancel') await api.cancelOrder(order.id)
+    setSelectedOrder(null)
+    await loadOrders()
+  }
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
@@ -103,16 +115,25 @@ export default function OrdersPage() {
               <FieldGroup className="space-y-4">
                 <Field>
                   <FieldLabel htmlFor="customer">客户名称</FieldLabel>
-                  <Input id="customer" placeholder="输入客户名称" />
+                  <Input id="customer" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="输入客户名称" />
                 </Field>
                 <Field>
-                  <FieldLabel>订购商品</FieldLabel>
-                  <p className="text-sm text-slate-500">功能开发中...</p>
+                  <FieldLabel htmlFor="product">订购商品</FieldLabel>
+                  <select id="product" value={productId} onChange={(e) => setProductId(e.target.value)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm">
+                    <option value="">选择商品</option>
+                    {products.filter((product) => product.id).map((product) => (
+                      <option key={product.id} value={product.id}>{product.sku} · {product.name}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="quantity">订购数量</FieldLabel>
+                  <Input id="quantity" type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
                 </Field>
               </FieldGroup>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>取消</Button>
-                <Button className="bg-slate-900 hover:bg-slate-800">创建订单</Button>
+                <Button className="bg-slate-900 hover:bg-slate-800" onClick={() => void createOrder()} disabled={!customerName.trim() || !productId || Number(quantity) <= 0}>创建订单</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -153,6 +174,8 @@ export default function OrdersPage() {
             <CardDescription>共 {filteredOrders.length} 个订单</CardDescription>
           </CardHeader>
           <CardContent>
+            {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+            {loading && <p className="mb-4 text-sm text-slate-400">正在加载订单...</p>}
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -171,13 +194,13 @@ export default function OrdersPage() {
                       <TableCell className="font-mono text-xs font-medium">{order.orderNo}</TableCell>
                       <TableCell className="text-xs text-slate-500">{order.customerName}</TableCell>
                       <TableCell className="text-xs">
-                        {order.items.map((item, i) => (
+                        {(order.items ?? []).map((item, i) => (
                           <div key={i} className="text-slate-600">
-                            {item.name} × {item.quantity}
+                            {item.productName} × {item.orderedQuantity}
                           </div>
                         ))}
                       </TableCell>
-                      <TableCell><StatusBadge status={order.status} /></TableCell>
+                      <TableCell><StatusBadge status={order.status ?? "PENDING_CHECK"} /></TableCell>
                       <TableCell className="text-xs text-slate-400">{order.createdAt}</TableCell>
                       <TableCell className="text-right">
                         <Dialog>
@@ -201,11 +224,11 @@ export default function OrdersPage() {
                                 <div>
                                   <p className="text-sm font-medium text-slate-900">订购商品</p>
                                   <div className="mt-2 space-y-2">
-                                    {selectedOrder.items.map((item, i) => (
+                                    {(selectedOrder.items ?? []).map((item, i) => (
                                       <div key={i} className="rounded-lg border border-slate-200 p-3">
-                                        <p className="text-sm font-medium">{item.name}</p>
+                                        <p className="text-sm font-medium">{item.productName}</p>
                                         <p className="text-xs text-slate-500">SKU: {item.sku}</p>
-                                        <p className="mt-1 text-sm font-semibold">订购数量: {item.quantity}</p>
+                                        <p className="mt-1 text-sm font-semibold">订购数量: {item.orderedQuantity}</p>
                                       </div>
                                     ))}
                                   </div>
@@ -219,12 +242,12 @@ export default function OrdersPage() {
                                 <div className="flex gap-2 pt-4">
                                   {selectedOrder.status === 'PENDING_CHECK' && (
                                     <>
-                                      <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700">核查库存</Button>
-                                      <Button variant="outline" className="flex-1">取消订单</Button>
+                                      <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={() => void runOrderAction("check", selectedOrder)}>核查库存</Button>
+                                      <Button variant="outline" className="flex-1" onClick={() => void runOrderAction("cancel", selectedOrder)}>取消订单</Button>
                                     </>
                                   )}
                                   {selectedOrder.status === 'ABNORMAL' && (
-                                    <Button className="w-full bg-amber-600 hover:bg-amber-700">重新核查</Button>
+                                    <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={() => void runOrderAction("recheck", selectedOrder)}>重新核查</Button>
                                   )}
                                 </div>
                               </div>
