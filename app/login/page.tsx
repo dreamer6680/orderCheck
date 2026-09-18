@@ -34,15 +34,18 @@ export default function LoginPage() {
         body: JSON.stringify({ username, password }),
       })
 
+      const data = await response.json().catch(() => null)
+
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || '登录失败，请检查用户名和密码')
+        throw new Error(data?.message || '登录失败，请检查用户名和密码')
       }
 
-      const data = await response.json()
+      if (!data?.user || !data?.token) {
+        throw new Error('登录服务返回了无效数据')
+      }
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
-      router.push('/dashboard')
+      router.push('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败')
     } finally {
