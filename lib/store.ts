@@ -1,3 +1,4 @@
+import { api } from './api/client'
 import { create } from 'zustand'
 
 export interface User {
@@ -26,18 +27,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (username: string, password: string) => {
     set({ isLoading: true, error: null })
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || '登录失败')
-      }
-
-      const data = await response.json()
+      const data = await api.login({ username, password })
       set({
         user: data.user,
         token: data.token,
