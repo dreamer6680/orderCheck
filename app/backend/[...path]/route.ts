@@ -9,13 +9,10 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   target.search = incomingUrl.search;
 
   const headers = new Headers();
-  const authorization = request.headers.get("authorization");
-  const contentType = request.headers.get("content-type");
-  const accept = request.headers.get("accept");
-
-  if (authorization) headers.set("authorization", authorization);
-  if (contentType) headers.set("content-type", contentType);
-  if (accept) headers.set("accept", accept);
+  for (const headerName of ["authorization", "content-type", "accept"]) {
+    const value = request.headers.get(headerName);
+    if (value) headers.set(headerName, value);
+  }
 
   const init: RequestInit = {
     method: request.method,
@@ -29,14 +26,17 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   }
 
   const response = await fetch(target, init);
+  const body = response.status === 204 || response.status === 205
+    ? null
+    : await response.arrayBuffer();
 
   const responseHeaders = new Headers();
-  const responseContentType = response.headers.get("content-type");
-  if (responseContentType) {
-    responseHeaders.set("content-type", responseContentType);
+  for (const headerName of ["content-type", "content-length", "location"]) {
+    const value = response.headers.get(headerName);
+    if (value) responseHeaders.set(headerName, value);
   }
 
-  return new NextResponse(response.body, {
+  return new NextResponse(body, {
     status: response.status,
     statusText: response.statusText,
     headers: responseHeaders,
