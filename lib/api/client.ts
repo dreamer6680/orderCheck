@@ -72,4 +72,11 @@ export const api = {
   recordInbound: (body: InboundRequest) =>
     unwrap(generated.recordInbound(body, mergeOptions())),
   listProducts: () => unwrap(generated.listProducts(mergeOptions())),
+  getProduct: (id: number) => unwrap(generated.getProduct(id, mergeOptions())),
+  createProduct: (body: generated.ProductRequest) =>
+    unwrap(generated.createProduct(body, mergeOptions())),
+  updateProduct: (id: number, body: generated.ProductRequest) =>
+    unwrap(generated.updateProduct(id, body, mergeOptions())),
+  deleteProduct: (id: number) =>
+    unwrap(generated.deleteProduct(id, mergeOptions())),
 };
