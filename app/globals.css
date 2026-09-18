@@ -163,3 +163,10 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 桌面端内容区跟随侧栏展开状态，移动端保持全宽。 */
+@media (min-width: 1024px) {
+  body[data-sidebar-collapsed='true'] main {
+    margin-left: 72px !important;
+  }
+}
