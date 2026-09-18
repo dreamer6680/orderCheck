@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { api } from '@/lib/api/client'
 
 const DEMO_ACCOUNTS = [
   { username: 'sales01', password: 'demo123', name: '业务员', role: 'SALES' },
@@ -28,17 +29,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
-
-      const data = await response.json().catch(() => null)
-
-      if (!response.ok) {
-        throw new Error(data?.message || '登录失败，请检查用户名和密码')
-      }
+      const data = await api.login({ username, password })
 
       if (!data?.user || !data?.token) {
         throw new Error('登录服务返回了无效数据')
