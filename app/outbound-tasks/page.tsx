@@ -1,100 +1,118 @@
-'use client'
+"use client";
 
-import { useState, useMemo } from 'react'
-import { ArrowUpRight, AlertCircle, Check, Search } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
-import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
+import { useState, useMemo } from "react";
+import { ArrowUpRight, AlertCircle, Check, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
 
 const mockOutboundTasks = [
   {
     id: 1,
-    orderNo: 'SO-20260918024',
-    customerName: '杭州云川贸易有限公司',
+    orderNo: "SO-20260918024",
+    customerName: "杭州云川贸易有限公司",
     records: [
       {
         recordId: 1,
-        sku: 'AL-CN-024',
-        name: '铝合金连接件',
+        sku: "AL-CN-024",
+        name: "铝合金连接件",
         planned: 240,
         actual: null,
-        status: 'PENDING',
+        status: "PENDING",
       },
     ],
-    createdAt: '2026-09-18 10:42',
+    createdAt: "2026-09-18 10:42",
   },
   {
     id: 2,
-    orderNo: 'SO-20260918023',
-    customerName: '上海远洋工业',
+    orderNo: "SO-20260918023",
+    customerName: "上海远洋工业",
     records: [
       {
         recordId: 2,
-        sku: 'SS-BL-120',
-        name: '不锈钢螺栓',
+        sku: "SS-BL-120",
+        name: "不锈钢螺栓",
         planned: 1200,
         actual: null,
-        status: 'PENDING',
+        status: "PENDING",
       },
     ],
-    createdAt: '2026-09-18 09:18',
+    createdAt: "2026-09-18 09:18",
   },
   {
     id: 3,
-    orderNo: 'SO-20260918010',
-    customerName: '南京物流有限公司',
+    orderNo: "SO-20260918010",
+    customerName: "南京物流有限公司",
     records: [
       {
         recordId: 3,
-        sku: 'CF-FL-048',
-        name: '碳钢法兰',
+        sku: "CF-FL-048",
+        name: "碳钢法兰",
         planned: 48,
         actual: 45,
-        status: 'COMPLETED',
+        status: "COMPLETED",
         difference: 3,
-        reason: '现场发现3件破损，已剔除',
+        reason: "现场发现3件破损，已剔除",
       },
       {
         recordId: 4,
-        sku: 'AL-CN-024',
-        name: '铝合金连接件',
+        sku: "AL-CN-024",
+        name: "铝合金连接件",
         planned: 300,
         actual: 300,
-        status: 'COMPLETED',
+        status: "COMPLETED",
         difference: 0,
       },
     ],
-    createdAt: '2026-09-17 11:30',
+    createdAt: "2026-09-17 11:30",
   },
-]
+];
 
 export default function OutboundTasksPage() {
-  const [search, setSearch] = useState('')
-  const [completeTaskId, setCompleteTaskId] = useState<number | null>(null)
-  const [completeQuantity, setCompleteQuantity] = useState('')
-  const [completeDifference, setCompleteDifference] = useState('')
-  const [isCompleteOpen, setIsCompleteOpen] = useState(false)
+  const [search, setSearch] = useState("");
+  const [completeTaskId, setCompleteTaskId] = useState<number | null>(null);
+  const [completeQuantity, setCompleteQuantity] = useState("");
+  const [completeDifference, setCompleteDifference] = useState("");
+  const [isCompleteOpen, setIsCompleteOpen] = useState(false);
 
   const filteredTasks = useMemo(() => {
     return mockOutboundTasks.filter((task) =>
-      `${task.orderNo}${task.customerName}`.toLowerCase().includes(search.toLowerCase()),
-    )
-  }, [search])
+      `${task.orderNo}${task.customerName}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+    );
+  }, [search]);
 
   const pendingRecords = mockOutboundTasks.flatMap((task) =>
-    task.records.filter((r) => r.status === 'PENDING').map((r) => ({ ...r, orderNo: task.orderNo })),
-  )
+    task.records
+      .filter((r) => r.status === "PENDING")
+      .map((r) => ({ ...r, orderNo: task.orderNo })),
+  );
 
   const handleCompleteTask = (recordId: number) => {
-    setCompleteTaskId(recordId)
-    setCompleteQuantity('')
-    setCompleteDifference('')
-    setIsCompleteOpen(true)
-  }
+    setCompleteTaskId(recordId);
+    setCompleteQuantity("");
+    setCompleteDifference("");
+    setIsCompleteOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
@@ -105,7 +123,9 @@ export default function OutboundTasksPage() {
               <ArrowUpRight size={20} />
             </div>
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">待出库任务</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                待出库任务
+              </h1>
               <p className="mt-1 text-sm text-slate-500">确认出库和库存扣减</p>
             </div>
           </div>
@@ -115,7 +135,9 @@ export default function OutboundTasksPage() {
           <Card className="border-slate-200 shadow-none">
             <CardContent className="p-5">
               <p className="text-xs text-slate-500">待处理任务</p>
-              <p className="mt-3 text-3xl font-semibold">{pendingRecords.length}</p>
+              <p className="mt-3 text-3xl font-semibold">
+                {pendingRecords.length}
+              </p>
               <p className="mt-2 text-xs text-slate-400">需立即处理</p>
             </CardContent>
           </Card>
@@ -123,7 +145,11 @@ export default function OutboundTasksPage() {
             <CardContent className="p-5">
               <p className="text-xs text-slate-500">已完成订单</p>
               <p className="mt-3 text-3xl font-semibold">
-                {mockOutboundTasks.filter((t) => t.records.every((r) => r.status === 'COMPLETED')).length}
+                {
+                  mockOutboundTasks.filter((t) =>
+                    t.records.every((r) => r.status === "COMPLETED"),
+                  ).length
+                }
               </p>
               <p className="mt-2 text-xs text-emerald-600">已出库完成</p>
             </CardContent>
@@ -134,7 +160,12 @@ export default function OutboundTasksPage() {
               <p className="mt-3 text-3xl font-semibold">
                 {mockOutboundTasks
                   .flatMap((t) => t.records)
-                  .filter((r) => r.status === 'COMPLETED' && r.difference && r.difference > 0)
+                  .filter(
+                    (r) =>
+                      r.status === "COMPLETED" &&
+                      r.difference &&
+                      r.difference > 0,
+                  )
                   .reduce((sum, r) => sum + (r.difference || 0), 0)}
               </p>
               <p className="mt-2 text-xs text-amber-600">需人工说明</p>
@@ -162,26 +193,43 @@ export default function OutboundTasksPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-base font-semibold">{task.orderNo}</CardTitle>
+                    <CardTitle className="text-base font-semibold">
+                      {task.orderNo}
+                    </CardTitle>
                     <CardDescription>{task.customerName}</CardDescription>
                   </div>
-                  <span className="text-xs text-slate-400">创建于 {task.createdAt}</span>
+                  <span className="text-xs text-slate-400">
+                    创建于 {task.createdAt}
+                  </span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 {task.records.map((record) => (
-                  <div key={record.recordId} className="rounded-lg border border-slate-200 p-4">
+                  <div
+                    key={record.recordId}
+                    className="rounded-lg border border-slate-200 p-4"
+                  >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-mono text-xs font-medium text-slate-700">{record.sku}</p>
-                        <p className="text-sm font-medium text-slate-900">{record.name}</p>
+                        <p className="font-mono text-xs font-medium text-slate-700">
+                          {record.sku}
+                        </p>
+                        <p className="text-sm font-medium text-slate-900">
+                          {record.name}
+                        </p>
                       </div>
-                      {record.status === 'PENDING' ? (
-                        <Badge className="bg-blue-100 text-blue-700 border-blue-200" variant="outline">
+                      {record.status === "PENDING" ? (
+                        <Badge
+                          className="bg-blue-100 text-blue-700 border-blue-200"
+                          variant="outline"
+                        >
                           待处理
                         </Badge>
                       ) : (
-                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200" variant="outline">
+                        <Badge
+                          className="bg-emerald-100 text-emerald-700 border-emerald-200"
+                          variant="outline"
+                        >
                           已完成
                         </Badge>
                       )}
@@ -190,27 +238,36 @@ export default function OutboundTasksPage() {
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <div className="rounded-lg bg-slate-50 p-2">
                         <p className="text-xs text-slate-500">计划出库</p>
-                        <p className="mt-1 text-lg font-semibold text-slate-900">{record.planned}</p>
+                        <p className="mt-1 text-lg font-semibold text-slate-900">
+                          {record.planned}
+                        </p>
                       </div>
                       <div className="rounded-lg bg-slate-50 p-2">
                         <p className="text-xs text-slate-500">实际出库</p>
                         <p className="mt-1 text-lg font-semibold text-slate-900">
-                          {record.actual !== null ? record.actual : '—'}
+                          {record.actual !== null ? record.actual : "—"}
                         </p>
                       </div>
                     </div>
 
-                    {record.status === 'COMPLETED' && record.difference && record.difference > 0 && (
-                      <Alert className="border-amber-200 bg-amber-50 mb-3">
-                        <AlertCircle className="h-4 w-4 text-amber-600" />
-                        <AlertDescription className="text-xs text-amber-700">
-                          {record.reason}
-                        </AlertDescription>
-                      </Alert>
-                    )}
+                    {record.status === "COMPLETED" &&
+                      record.difference &&
+                      record.difference > 0 && (
+                        <Alert className="border-amber-200 bg-amber-50 mb-3">
+                          <AlertCircle className="h-4 w-4 text-amber-600" />
+                          <AlertDescription className="text-xs text-amber-700">
+                            {record.reason}
+                          </AlertDescription>
+                        </Alert>
+                      )}
 
-                    {record.status === 'PENDING' && (
-                      <Dialog open={isCompleteOpen && completeTaskId === record.recordId} onOpenChange={setIsCompleteOpen}>
+                    {record.status === "PENDING" && (
+                      <Dialog
+                        open={
+                          isCompleteOpen && completeTaskId === record.recordId
+                        }
+                        onOpenChange={setIsCompleteOpen}
+                      >
                         <DialogTrigger asChild>
                           <Button
                             onClick={() => handleCompleteTask(record.recordId)}
@@ -229,12 +286,16 @@ export default function OutboundTasksPage() {
                           </DialogHeader>
                           <FieldGroup className="space-y-4">
                             <Field>
-                              <FieldLabel htmlFor="actual-qty">实际出库数量</FieldLabel>
+                              <FieldLabel htmlFor="actual-qty">
+                                实际出库数量
+                              </FieldLabel>
                               <Input
                                 id="actual-qty"
                                 type="number"
                                 value={completeQuantity}
-                                onChange={(e) => setCompleteQuantity(e.target.value)}
+                                onChange={(e) =>
+                                  setCompleteQuantity(e.target.value)
+                                }
                                 placeholder={`请输入实际数量 (1-${record.planned})`}
                                 min="1"
                                 max={record.planned}
@@ -248,12 +309,15 @@ export default function OutboundTasksPage() {
                               Number(completeQuantity) !== record.planned && (
                                 <Field>
                                   <FieldLabel htmlFor="difference-reason">
-                                    差异说明 <span className="text-red-600">*</span>
+                                    差异说明{" "}
+                                    <span className="text-red-600">*</span>
                                   </FieldLabel>
                                   <textarea
                                     id="difference-reason"
                                     value={completeDifference}
-                                    onChange={(e) => setCompleteDifference(e.target.value)}
+                                    onChange={(e) =>
+                                      setCompleteDifference(e.target.value)
+                                    }
                                     placeholder="请说明数量差异原因，如破损、错发等"
                                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
                                     rows={3}
@@ -265,7 +329,10 @@ export default function OutboundTasksPage() {
                               )}
                           </FieldGroup>
                           <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsCompleteOpen(false)}>
+                            <Button
+                              variant="outline"
+                              onClick={() => setIsCompleteOpen(false)}
+                            >
                               取消
                             </Button>
                             <Button
@@ -287,5 +354,5 @@ export default function OutboundTasksPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

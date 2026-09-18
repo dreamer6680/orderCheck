@@ -1,11 +1,155 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { Building2, BellRing, Save, ShieldCheck } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Switch } from '@/components/ui/switch'
-import { useNotificationStore } from '@/lib/store'
+import { useEffect, useState } from "react";
+import { Building2, BellRing, Save, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { useNotificationStore } from "@/lib/store";
 
-export default function SettingsPage() { const [settings,setSettings]=useState({companyName:'',timezone:'',orderAutoCheck:false,lowStockAlert:false,alertThreshold:10}); const [loading,setLoading]=useState(true); const addNotification=useNotificationStore(s=>s.addNotification); useEffect(()=>{fetch('/api/admin').then(r=>r.json()).then(d=>setSettings(d.settings)).finally(()=>setLoading(false))},[]); const update=(key:string,value:string|boolean)=>setSettings(s=>({...s,[key]:value})); const save=async()=>{await fetch('/api/admin',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(settings)}); addNotification('success','系统设置已保存')}; if(loading)return <main className="min-h-screen bg-[#f7f8fa] px-4 pb-24 pt-6 lg:ml-[238px]"><p className="text-sm text-slate-400">正在加载系统设置...</p></main>; return <main className="min-h-screen bg-[#f7f8fa] px-4 pb-24 pt-6 sm:px-8 lg:ml-[238px] lg:px-10 lg:pb-10 lg:pt-9"><div className="mx-auto max-w-4xl"><div className="mb-7"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">系统管理 / 配置</p><h1 className="mt-2 text-2xl font-semibold tracking-tight">系统设置</h1><p className="mt-1 text-sm text-slate-500">管理企业信息、业务规则与通知策略</p></div><div className="flex flex-col gap-5"><Card><CardHeader><CardTitle className="flex items-center gap-2"><Building2 className="size-5"/>企业信息</CardTitle><CardDescription>这些信息会展示在系统工作台与通知中</CardDescription></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2"><label className="grid gap-2 text-sm font-medium">企业名称<Input value={settings.companyName} onChange={e=>update('companyName',e.target.value)}/></label><label className="grid gap-2 text-sm font-medium">系统时区<Input value={settings.timezone} onChange={e=>update('timezone',e.target.value)}/></label></CardContent></Card><Card><CardHeader><CardTitle className="flex items-center gap-2"><BellRing className="size-5"/>业务通知</CardTitle><CardDescription>设置自动核查与库存预警策略</CardDescription></CardHeader><CardContent className="flex flex-col gap-5"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-medium">订单自动核查</p><p className="text-xs text-slate-500">新订单进入后自动检查库存与交期</p></div><Switch checked={settings.orderAutoCheck} onCheckedChange={v=>update('orderAutoCheck',v)}/></div><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-medium">低库存预警</p><p className="text-xs text-slate-500">库存低于安全线时通知负责人</p></div><Switch checked={settings.lowStockAlert} onCheckedChange={v=>update('lowStockAlert',v)}/></div><label className="grid max-w-xs gap-2 text-sm font-medium">库存预警阈值（件）<Input type="number" value={settings.alertThreshold} onChange={e=>update('alertThreshold',e.target.value)}/></label></CardContent></Card><Card><CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="size-5"/>安全说明</CardTitle></CardHeader><CardContent><p className="text-sm leading-6 text-slate-500">只有负责人角色可以访问此页面。所有设置变更都会记录在系统操作日志中。</p></CardContent></Card><Button onClick={save} className="w-full sm:w-fit"><Save data-icon="inline-start"/>保存设置</Button></div></div></main> }
+export default function SettingsPage() {
+  const [settings, setSettings] = useState({
+    companyName: "",
+    timezone: "",
+    orderAutoCheck: false,
+    lowStockAlert: false,
+    alertThreshold: 10,
+  });
+  const [loading, setLoading] = useState(true);
+  const addNotification = useNotificationStore((s) => s.addNotification);
+  useEffect(() => {
+    fetch("/api/admin")
+      .then((r) => r.json())
+      .then((d) => setSettings(d.settings))
+      .finally(() => setLoading(false));
+  }, []);
+  const update = (key: string, value: string | boolean) =>
+    setSettings((s) => ({ ...s, [key]: value }));
+  const save = async () => {
+    await fetch("/api/admin", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    addNotification("success", "系统设置已保存");
+  };
+  if (loading)
+    return (
+      <main className="min-h-screen bg-[#f7f8fa] px-4 pb-24 pt-6 lg:ml-[238px]">
+        <p className="text-sm text-slate-400">正在加载系统设置...</p>
+      </main>
+    );
+  return (
+    <main className="min-h-screen bg-[#f7f8fa] px-4 pb-24 pt-6 sm:px-8 lg:ml-[238px] lg:px-10 lg:pb-10 lg:pt-9">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-7">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+            系统管理 / 配置
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+            系统设置
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            管理企业信息、业务规则与通知策略
+          </p>
+        </div>
+        <div className="flex flex-col gap-5">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="size-5" />
+                企业信息
+              </CardTitle>
+              <CardDescription>
+                这些信息会展示在系统工作台与通知中
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2 text-sm font-medium">
+                企业名称
+                <Input
+                  value={settings.companyName}
+                  onChange={(e) => update("companyName", e.target.value)}
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-medium">
+                系统时区
+                <Input
+                  value={settings.timezone}
+                  onChange={(e) => update("timezone", e.target.value)}
+                />
+              </label>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BellRing className="size-5" />
+                业务通知
+              </CardTitle>
+              <CardDescription>设置自动核查与库存预警策略</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">订单自动核查</p>
+                  <p className="text-xs text-slate-500">
+                    新订单进入后自动检查库存与交期
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.orderAutoCheck}
+                  onCheckedChange={(v) => update("orderAutoCheck", v)}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium">低库存预警</p>
+                  <p className="text-xs text-slate-500">
+                    库存低于安全线时通知负责人
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.lowStockAlert}
+                  onCheckedChange={(v) => update("lowStockAlert", v)}
+                />
+              </div>
+              <label className="grid max-w-xs gap-2 text-sm font-medium">
+                库存预警阈值（件）
+                <Input
+                  type="number"
+                  value={settings.alertThreshold}
+                  onChange={(e) => update("alertThreshold", e.target.value)}
+                />
+              </label>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="size-5" />
+                安全说明
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-6 text-slate-500">
+                只有负责人角色可以访问此页面。所有设置变更都会记录在系统操作日志中。
+              </p>
+            </CardContent>
+          </Card>
+          <Button onClick={save} className="w-full sm:w-fit">
+            <Save data-icon="inline-start" />
+            保存设置
+          </Button>
+        </div>
+      </div>
+    </main>
+  );
+}
