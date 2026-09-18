@@ -1,6 +1,8 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { Sidebar } from '@/components/layout/sidebar'
+import { Notifications } from '@/components/layout/notifications'
 
 export const metadata: Metadata = {
   title: '订单库存核查系统',
@@ -41,7 +43,9 @@ export default function RootLayout({
   return (
     <html lang="zh">
       <body className="antialiased">
+        <Sidebar />
         {children}
+        <Notifications />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

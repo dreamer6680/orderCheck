@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { create } from 'zustand'
+import { useMemo, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   AlertTriangle,
   ArrowDownToLine,
@@ -51,8 +51,7 @@ const inventory = [
   { sku: 'SE-PA-086', name: '密封圈套装', actual: '42', reserved: '0', available: '42', safety: '100', status: '需补货' },
 ]
 
-type Store = { active: string; setActive: (active: string) => void; search: string; setSearch: (search: string) => void }
-const useAppStore = create<Store>((set) => ({ active: '工作台', setActive: (active) => set({ active }), search: '', setSearch: (search) => set({ search }) }))
+
 
 function StatusBadge({ type, children }: { type: string; children: React.ReactNode }) {
   const styles: Record<string, string> = { pending: 'bg-amber-50 text-amber-700 border-amber-200', outbound: 'bg-blue-50 text-blue-700 border-blue-200', error: 'bg-red-50 text-red-700 border-red-200', done: 'bg-emerald-50 text-emerald-700 border-emerald-200', good: 'bg-emerald-50 text-emerald-700 border-emerald-200', low: 'bg-amber-50 text-amber-700 border-amber-200', danger: 'bg-red-50 text-red-700 border-red-200' }
@@ -60,31 +59,23 @@ function StatusBadge({ type, children }: { type: string; children: React.ReactNo
 }
 
 export default function Page() {
-  const { active, setActive, search, setSearch } = useAppStore()
+  const router = useRouter()
   const [showAll, setShowAll] = useState(false)
+  const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    if (!token) {
+      router.push('/login')
+    }
+  }, [router])
+
   const filteredOrders = useMemo(() => orders.filter((order) => `${order.no}${order.customer}`.includes(search)), [search])
 
   return (
     <div className="min-h-screen bg-[#f7f8fa] text-slate-900">
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-[238px] border-r border-slate-200 bg-white lg:flex lg:flex-col">
-        <div className="flex h-[76px] items-center gap-3 border-b border-slate-100 px-6">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-slate-900 text-white"><PackageCheck data-icon="inline-start" /></div>
-          <div><p className="text-[15px] font-semibold tracking-tight">栖云贸易</p><p className="text-[11px] text-slate-400">订单库存核查系统</p></div>
-        </div>
-        <div className="flex flex-1 flex-col px-3 py-5">
-          <p className="px-3 pb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">业务管理</p>
-          <nav className="flex flex-col gap-1">
-            {navItems.map((item) => { const Icon = item.icon; const isActive = active === item.label; return <button key={item.label} onClick={() => setActive(item.label)} className={`flex h-10 items-center justify-between rounded-lg px-3 text-[13px] transition-colors ${isActive ? 'bg-slate-900 font-medium text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}><span className="flex items-center gap-3"><Icon data-icon="inline-start" />{item.label}</span>{item.count && <span className={`rounded-md px-1.5 py-0.5 text-[10px] ${isActive ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-500'}`}>{item.count}</span>}</button> })}
-          </nav>
-          <Separator className="my-6" />
-          <p className="px-3 pb-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">系统</p>
-          <button className="flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] text-slate-500 hover:bg-slate-50"><Users data-icon="inline-start" />用户与权限</button>
-          <button className="flex h-10 items-center gap-3 rounded-lg px-3 text-[13px] text-slate-500 hover:bg-slate-50"><Settings data-icon="inline-start" />系统设置</button>
-        </div>
-        <div className="m-3 flex items-center gap-3 rounded-xl bg-slate-50 p-3"><div className="flex size-8 items-center justify-center rounded-full bg-[#dce8f3] text-xs font-semibold text-slate-700">陈</div><div className="min-w-0 flex-1"><p className="truncate text-xs font-medium">陈思远</p><p className="text-[11px] text-slate-400">业务负责人</p></div><ChevronDown className="text-slate-400" /></div>
-      </aside>
       <main className="lg:pl-[238px]">
-        <header className="flex h-[76px] items-center justify-between border-b border-slate-200 bg-white px-6 lg:px-9"><div><p className="text-xs text-slate-400">周四，2026年9月18日</p><h1 className="mt-1 text-xl font-semibold tracking-tight">{active}</h1></div><div className="flex items-center gap-3"><div className="relative hidden sm:block"><Search className="absolute left-3 top-2.5 text-slate-400" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索订单、客户或 SKU" className="h-9 w-64 border-slate-200 bg-slate-50 pl-9 text-xs" /></div><button className="relative flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"><Bell /><span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-red-500" /></button></div></header>
+        <header className="flex h-[76px] items-center justify-between border-b border-slate-200 bg-white px-6 lg:px-9"><div><p className="text-xs text-slate-400">周四，2026年9月18日</p><h1 className="mt-1 text-xl font-semibold tracking-tight">工作台</h1></div><div className="flex items-center gap-3"><div className="relative hidden sm:block"><Search className="absolute left-3 top-2.5 text-slate-400" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索订单、客户或 SKU" className="h-9 w-64 border-slate-200 bg-slate-50 pl-9 text-xs" /></div><button className="relative flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"><Bell /><span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-red-500" /></button></div></header>
         <div className="mx-auto max-w-[1440px] p-6 lg:p-9">
           <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-sm text-slate-500">早上好，陈思远。这里是今日业务概览。</p><h2 className="text-2xl font-semibold tracking-tight">运营概览</h2></div><Button className="bg-slate-900 text-white hover:bg-slate-800"><Plus data-icon="inline-start" />创建客户订单</Button></div>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><MetricCard label="待核查订单" value="12" note="较昨日 +4" icon={ClipboardList} tone="amber"/><MetricCard label="待出库任务" value="8" note="今日需处理" icon={Truck} tone="blue"/><MetricCard label="异常订单" value="3" note="需人工介入" icon={AlertTriangle} tone="red"/><MetricCard label="低库存商品" value="6" note="低于安全库存" icon={Boxes} tone="violet"/></section>
