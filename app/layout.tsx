@@ -44,7 +44,7 @@ export default function RootLayout({
     <html lang="zh">
       <body className="antialiased">
         <Sidebar />
-        {children}
+        <div className="app-content">{children}</div>
         <Notifications />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
