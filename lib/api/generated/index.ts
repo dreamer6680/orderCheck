@@ -185,9 +185,20 @@ const queryString = (params?: object) => {
 };
 
 const parseResponse = async <T>(response: Response): Promise<ApiResponse<T>> => {
-  const data = [204, 205, 304].includes(response.status) || !response.body
-    ? (undefined as T)
-    : (await response.json()) as T;
+  if ([204, 205, 304].includes(response.status)) {
+    return { status: response.status, data: undefined as T };
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return { status: response.status, data: undefined as T };
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  const data = contentType.includes("application/json")
+    ? (JSON.parse(text) as T)
+    : (text as T);
+
   return { status: response.status, data };
 };
 
