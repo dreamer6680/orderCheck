@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { AlertTriangle, RefreshCw, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,43 +9,60 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
-
-const mockAbnormalOrders = [
-  {
-    id: 1,
-    orderNo: 'SO-20260918021',
-    customerName: '宁波精工制造',
-    items: [{ sku: 'SE-PA-086', name: '密封圈套装', ordered: 86, available: 42, shortage: 44 }],
-    exceptionReason: '库存不足：密封圈套装 需要86件，可用库存仅42件，缺货44件',
-    createdAt: '2026-09-17 16:36',
-  },
-  {
-    id: 2,
-    orderNo: 'SO-20260918015',
-    customerName: '江苏工业集团',
-    items: [
-      { sku: 'AL-CN-024', name: '铝合金连接件', ordered: 500, available: 180, shortage: 320 },
-      { sku: 'SS-BL-120', name: '不锈钢螺栓', ordered: 600, available: 150, shortage: 450 },
-    ],
-    exceptionReason: '多个商品库存不足：铝合金连接件 缺货320件；不锈钢螺栓 缺货450件',
-    createdAt: '2026-09-17 14:22',
-  },
-]
+import { api } from '@/lib/api/client'
+import type { InventoryProjection, ItemResponse, OrderResponse } from '@/lib/api/generated'
 
 export default function AbnormalOrdersPage() {
   const [search, setSearch] = useState('')
   const [isRecheckOpen, setIsRecheckOpen] = useState(false)
-  const [selectedOrder, setSelectedOrder] = useState<typeof mockAbnormalOrders[0] | null>(null)
+  const [orders, setOrders] = useState<OrderResponse[]>([])
+  const [inventory, setInventory] = useState<InventoryProjection[]>([])
+  const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const filteredOrders = useMemo(() => {
-    return mockAbnormalOrders.filter((order) =>
-      `${order.orderNo}${order.customerName}`.toLowerCase().includes(search.toLowerCase()),
-    )
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      const [orderData, inventoryData] = await Promise.all([
+        api.abnormalOrders({ keyword: search || undefined }),
+        api.listInventory(),
+      ])
+      setOrders(orderData)
+      setInventory(inventoryData)
+      setError('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '异常订单加载失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void loadData(), 250)
+    return () => window.clearTimeout(timer)
   }, [search])
 
-  const handleRecheck = (order: typeof mockAbnormalOrders[0]) => {
+  const filteredOrders = useMemo(() => orders, [orders])
+
+  const itemStock = (item: ItemResponse) => {
+    const stock = inventory.find((row) => row.productId === item.productId)
+    const ordered = item.orderedQuantity ?? 0
+    const available = stock?.availableQuantity ?? 0
+    return { ordered, available, shortage: Math.max(0, ordered - available) }
+  }
+
+  const handleRecheck = (order: OrderResponse) => {
     setSelectedOrder(order)
     setIsRecheckOpen(true)
+  }
+
+  const confirmRecheck = async () => {
+    if (!selectedOrder?.id) return
+    await api.recheckOrder(selectedOrder.id)
+    setIsRecheckOpen(false)
+    setSelectedOrder(null)
+    await loadData()
   }
 
   return (
@@ -63,7 +80,9 @@ export default function AbnormalOrdersPage() {
           </div>
         </div>
 
-        {filteredOrders.length === 0 ? (
+        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {loading && <p className="mb-4 text-sm text-slate-400">正在加载异常订单...</p>}
+        {filteredOrders.length === 0 && !loading ? (
           <Card className="border-slate-200 shadow-none">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <div className="flex size-16 items-center justify-center rounded-full bg-emerald-100 mb-4">
@@ -114,35 +133,35 @@ export default function AbnormalOrdersPage() {
                     <div>
                       <p className="mb-3 text-sm font-medium text-slate-900">缺货商品明细</p>
                       <div className="space-y-2">
-                        {order.items.map((item, i) => (
+                        {(order.items ?? []).map((item, i) => { const stock = itemStock(item); return (
                           <div
                             key={i}
                             className="rounded-lg border border-slate-200 bg-slate-50 p-3"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
-                                <p className="text-sm font-medium text-slate-900">{item.name}</p>
+                                <p className="text-sm font-medium text-slate-900">{item.productName}</p>
                                 <p className="text-xs text-slate-500">SKU: {item.sku}</p>
                               </div>
                               <div className="text-right">
                                 <div className="text-xs text-slate-500">订购 / 可用 / 缺货</div>
                                 <div className="mt-1 text-sm font-semibold text-slate-900">
-                                  {item.ordered} / {item.available} / <span className="text-red-600">{item.shortage}</span>
+                                  {stock.ordered} / {stock.available} / <span className="text-red-600">{stock.shortage}</span>
                                 </div>
                               </div>
                             </div>
                             <div className="mt-2 flex h-2 overflow-hidden rounded-full bg-slate-200">
                               <div
                                 className="bg-emerald-500"
-                                style={{ width: `${(item.available / item.ordered) * 100}%` }}
+                                style={{ width: `${stock.ordered ? Math.min(100, (stock.available / stock.ordered) * 100) : 0}%` }}
                               />
                               <div
                                 className="bg-red-500"
-                                style={{ width: `${(item.shortage / item.ordered) * 100}%` }}
+                                style={{ width: `${stock.ordered ? Math.min(100, (stock.shortage / stock.ordered) * 100) : 0}%` }}
                               />
                             </div>
                           </div>
-                        ))}
+                        )})}
                       </div>
                     </div>
 
@@ -163,35 +182,35 @@ export default function AbnormalOrdersPage() {
                             <DialogHeader>
                               <DialogTitle>重新核查库存</DialogTitle>
                               <DialogDescription>
-                                系统将重新检查 {selectedOrder.items.length} 件商品的库存
+                                系统将重新检查 {selectedOrder.items?.length ?? 0} 件商品的库存
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-3">
-                              {selectedOrder.items.map((item, i) => (
+                              {(selectedOrder.items ?? []).map((item, i) => { const stock = itemStock(item); return (
                                 <div key={i} className="rounded-lg border border-slate-200 p-3">
-                                  <p className="text-sm font-medium">{item.name}</p>
+                                  <p className="text-sm font-medium">{item.productName}</p>
                                   <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                                     <div>
                                       <p className="text-slate-500">订购</p>
-                                      <p className="font-semibold">{item.ordered}</p>
+                                      <p className="font-semibold">{stock.ordered}</p>
                                     </div>
                                     <div>
                                       <p className="text-slate-500">可用</p>
-                                      <p className="font-semibold">{item.available}</p>
+                                      <p className="font-semibold">{stock.available}</p>
                                     </div>
                                     <div>
                                       <p className="text-slate-500">缺货</p>
-                                      <p className="font-semibold text-red-600">{item.shortage}</p>
+                                      <p className="font-semibold text-red-600">{stock.shortage}</p>
                                     </div>
                                   </div>
                                 </div>
-                              ))}
+                              )})}
                             </div>
                             <DialogFooter>
                               <Button variant="outline" onClick={() => setIsRecheckOpen(false)}>
                                 取消
                               </Button>
-                              <Button className="bg-slate-900 hover:bg-slate-800" onClick={() => setIsRecheckOpen(false)}>
+                              <Button className="bg-slate-900 hover:bg-slate-800" onClick={() => void confirmRecheck()}>
                                 确认重新核查
                               </Button>
                             </DialogFooter>
