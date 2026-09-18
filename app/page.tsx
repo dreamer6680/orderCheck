@@ -122,7 +122,7 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-[#f7f8fa] text-slate-900">
-      <main className="lg:pl-[238px]">
+      <main>
         <header className="flex h-[76px] items-center justify-between border-b border-slate-200 bg-white px-6 lg:px-9"><div><p className="text-xs text-slate-400">周四，2026年9月18日</p><h1 className="mt-1 text-xl font-semibold tracking-tight">工作台</h1></div><div className="flex items-center gap-3"><div className="relative hidden sm:block"><Search className="absolute left-3 top-2.5 text-slate-400" /><Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索订单、客户或 SKU" className="h-9 w-64 border-slate-200 bg-slate-50 pl-9 text-xs" /></div><button className="relative flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"><Bell /><span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-red-500" /></button></div></header>
         <div className="mx-auto max-w-[1440px] p-6 lg:p-9">
           <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="mb-2 text-sm text-slate-500">这里是当前业务概览。</p><h2 className="text-2xl font-semibold tracking-tight">运营概览</h2></div><Button className="bg-slate-900 text-white hover:bg-slate-800" onClick={() => router.push("/orders")}><Plus data-icon="inline-start" />创建客户订单</Button></div>

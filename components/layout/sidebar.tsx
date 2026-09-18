@@ -13,6 +13,7 @@ const navItems = [
   { label: '客户订单', href: '/orders', icon: ClipboardList, roles: ['SALES', 'MANAGER'] },
   { label: '异常订单', href: '/abnormal-orders', icon: AlertTriangle, roles: ['SALES', 'MANAGER'] },
   { label: '库存与入库', href: '/inventory', icon: Boxes, roles: ['SALES', 'WAREHOUSE', 'MANAGER'] },
+  { label: '商品管理', href: '/products', icon: PackageCheck, roles: ['WAREHOUSE', 'MANAGER'] },
   { label: '待出库任务', href: '/outbound-tasks', icon: Truck, roles: ['WAREHOUSE', 'MANAGER'] },
 ]
 const systemItems = [
