@@ -174,7 +174,7 @@ export type ApiResponse<T> = {
   status: number;
 };
 
-const queryString = (params?: Record<string, unknown>) => {
+const queryString = (params?: object) => {
   const search = new URLSearchParams();
   Object.entries(params ?? {}).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
@@ -191,6 +191,12 @@ const parseResponse = async <T>(response: Response): Promise<ApiResponse<T>> => 
   return { status: response.status, data };
 };
 
+const jsonHeaders = (options?: RequestInit) => {
+  const headers = new Headers(options?.headers);
+  headers.set("Content-Type", "application/json");
+  return headers;
+};
+
 export const getProduct = async (id: number, options?: RequestInit) =>
   parseResponse<ProductResponse>(await fetch(`/backend/api/products/${id}`, { ...options, method: "GET" }));
 
@@ -198,7 +204,7 @@ export const updateProduct = async (id: number, productRequest: ProductRequest, 
   parseResponse<ProductResponse>(await fetch(`/backend/api/products/${id}`, {
     ...options,
     method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: jsonHeaders(options),
     body: JSON.stringify(productRequest),
   }));
 
@@ -212,7 +218,7 @@ export const createProduct = async (productRequest: ProductRequest, options?: Re
   parseResponse<ProductResponse>(await fetch("/backend/api/products", {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: jsonHeaders(options),
     body: JSON.stringify(productRequest),
   }));
 
@@ -223,7 +229,7 @@ export const create = async (createOrderRequest: CreateOrderRequest, options?: R
   parseResponse<OrderResponse>(await fetch("/backend/api/orders", {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: jsonHeaders(options),
     body: JSON.stringify(createOrderRequest),
   }));
 
@@ -243,7 +249,7 @@ export const recordInbound = async (inboundRequest: InboundRequest, options?: Re
   parseResponse<InboundResult>(await fetch("/backend/api/inventory/inbounds", {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: jsonHeaders(options),
     body: JSON.stringify(inboundRequest),
   }));
 
@@ -251,7 +257,7 @@ export const login = async (loginRequest: LoginRequest, options?: RequestInit) =
   parseResponse<LoginResponse>(await fetch("/backend/api/auth/login", {
     ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
+    headers: jsonHeaders(options),
     body: JSON.stringify(loginRequest),
   }));
 
