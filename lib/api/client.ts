@@ -12,9 +12,10 @@ const authOptions = (): RequestInit => {
   if (typeof window === "undefined") return {};
 
   const token = window.localStorage.getItem("token");
-  return token
-    ? { headers: { Authorization: `Bearer ${token}` } }
-    : {};
+  if (!token) return {};
+
+  const authorization = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+  return { headers: { Authorization: authorization } };
 };
 
 const mergeOptions = (options?: RequestInit): RequestInit => {
