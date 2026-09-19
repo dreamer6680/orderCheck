@@ -17,5 +17,5 @@ export interface WarehouseProgress {
 }
 
 export const warehouseProgressApi = {
-  get: () => apiFetch<WarehouseProgress>('/api/dashboard/warehouse-progress'),
+  get: () => apiFetch<WarehouseProgress>('/api/dashboard/warehouse-progress', { cache: 'no-store' }),
 }
