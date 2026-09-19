@@ -210,6 +210,7 @@ export default function UsersPage() {
                   onChange={event => setDraft(previous => ({ ...previous, enabled: event.target.checked }))} />启用账号
               </label>
             </div>
+            {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
             <DialogFooter>
               <Button variant="outline" disabled={saving} onClick={() => setEditor(null)}>取消</Button>
               <Button disabled={saving || !draft.displayName.trim() || (editor === 'create' && (!draft.username.trim() || draft.password.length < 8))}
@@ -227,6 +228,7 @@ export default function UsersPage() {
               <Input type="password" value={newPassword} autoComplete="new-password"
                 onChange={event => setNewPassword(event.target.value)} />
             </label>
+            {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
             <DialogFooter>
               <Button variant="outline" disabled={saving} onClick={() => setResetFor(null)}>取消</Button>
               <Button disabled={saving || newPassword.length < 8} onClick={() => void submitResetPassword()}>
