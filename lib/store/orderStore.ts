@@ -3,7 +3,7 @@
 import { create } from 'zustand'
 import { orderApi } from '../api-client'
 
-export type OrderStatus = 'PENDING_CHECK' | 'PENDING_OUTBOUND' | 'ABNORMAL' | 'COMPLETED'
+export type OrderStatus = 'PENDING_CHECK' | 'PENDING_OUTBOUND' | 'ABNORMAL' | 'COMPLETED | 'CANCELLED'
 export interface OrderItem { sku: string; name: string; quantity: number }
 export interface OrderRecord { id: number; orderNo: string; customerName: string; status: OrderStatus; items: OrderItem[]; createdAt: string; deliveryDate: string | null; exceptionReason?: string }
 
