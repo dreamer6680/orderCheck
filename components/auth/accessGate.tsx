@@ -9,13 +9,16 @@ export function AccessGate({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const user = useUserStore((state) => state.user)
-  const restoreSession = useUserStore((state) => state.restoreSession)
+  const verifySession = useUserStore((state) => state.verifySession)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    restoreSession()
-    setReady(true)
-  }, [restoreSession])
+    let active = true
+    void verifySession().finally(() => {
+      if (active) setReady(true)
+    })
+    return () => { active = false }
+  }, [verifySession])
 
   const permission = routePermission(pathname)
   const allowed = pathname === '/login' || can(user?.role, permission ?? 'dashboard:view')
