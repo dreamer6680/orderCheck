@@ -433,10 +433,10 @@ export default function Page() {
                     <ProgressItem
                       icon={Truck}
                       label="今日需交付"
-                      value={warehouseProgress.todayDuePendingOrderCount}
+                      value={warehouseProgress.todayDueUnfulfilledOrderCount}
                       unit="单"
-                      progress={warehouseProgress.todayDuePendingOrderPercent}
-                      note={`今日需交付且仍待出库 ${warehouseProgress.todayDuePendingOrderCount} / 全部待出库订单 ${warehouseProgress.pendingOutboundOrderCount} 单；未录入交付日期 ${warehouseProgress.undatedPendingOrderCount} 单`}
+                      progress={warehouseProgress.todayDueUnfulfilledOrderPercent}
+                      note={`今日交付且未完成 ${warehouseProgress.todayDueUnfulfilledOrderCount} / 全部未完成订单 ${warehouseProgress.unfulfilledOrderCount} 单（包含待核查、待出库、异常）；未录入交付日期 ${warehouseProgress.undatedUnfulfilledOrderCount} 单`}
                       color="bg-emerald-500"
                     />
                     <ProgressItem
