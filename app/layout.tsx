@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Notifications } from '@/components/layout/notifications'
+import { LocatorJSDev } from '@/components/locatorjs-dev'
 
 export const metadata: Metadata = {
   title: '订单库存核查系统',
@@ -46,6 +47,7 @@ export default function RootLayout({
         <Sidebar />
         <div className="app-content">{children}</div>
         <Notifications />
+        <LocatorJSDev />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
