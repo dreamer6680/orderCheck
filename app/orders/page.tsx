@@ -259,7 +259,7 @@ export default function OrdersPage() {
                         <TableCell className="text-xs">
                           {order.items.map((item) => (
                             <div key={item.sku}>
-                              {item.name} × {item.quantity}
+                              {item.productName} × {item.orderedQuantity}
                             </div>
                           ))}
                         </TableCell>
@@ -389,9 +389,9 @@ export default function OrdersPage() {
                       key={item.sku}
                       className="rounded-lg border p-3 text-sm"
                     >
-                      <div className="font-medium">{item.name}</div>
+                      <div className="font-medium">{item.productName}</div>
                       <div className="text-xs text-muted-foreground">
-                        SKU: {item.sku}，数量：{item.quantity}
+                        SKU: {item.sku}，数量：{item.orderedQuantity}
                       </div>
                     </div>
                   ))}
