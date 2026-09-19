@@ -23,12 +23,16 @@ const systemItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, logout } = useUserStore()
+  const { user, logout, restoreSession } = useUserStore()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const currentRole = user?.role
   const visibleNavItems = navItems.filter((item) => item.roles.includes(currentRole))
   const visibleSystemItems = systemItems.filter((item) => item.roles.includes(currentRole))
+
+  useEffect(() => {
+    restoreSession()
+  }, [restoreSession])
 
   useEffect(() => {
     document.body.dataset.sidebarCollapsed = String(collapsed)
