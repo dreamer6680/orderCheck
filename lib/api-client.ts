@@ -33,11 +33,11 @@ export const orderApi = {
   list: (params: { status?: string; keyword?: string; page?: number; size?: number } = {}) => {
     const query = new URLSearchParams()
     Object.entries(params).forEach(([key, value]) => value && query.set(key, String(value)))
-    return apiFetch<import('./order-store').OrderRecord[]>(`/api/orders?${query}`)
+    return apiFetch<import('./store/orderStore').OrderRecord[]>(`/api/orders?${query}`)
   },
-  detail: (id: number) => apiFetch<import('./order-store').OrderRecord>(`/api/orders/${id}`),
-  create: (payload: unknown) => apiFetch<import('./order-store').OrderRecord>('/api/orders', { method: 'POST', body: JSON.stringify(payload) }),
-  checkInventory: (id: number) => apiFetch<import('./order-store').OrderRecord>(`/api/orders/${id}/check-inventory`, { method: 'POST' }),
-  recheckInventory: (id: number) => apiFetch<import('./order-store').OrderRecord>(`/api/orders/${id}/recheck-inventory`, { method: 'POST' }),
-  cancel: (id: number) => apiFetch<import('./order-store').OrderRecord>(`/api/orders/${id}/cancel`, { method: 'POST' }),
+  detail: (id: number) => apiFetch<import('./store/orderStore').OrderRecord>(`/api/orders/${id}`),
+  create: (payload: unknown) => apiFetch<import('./store/orderStore').OrderRecord>('/api/orders', { method: 'POST', body: JSON.stringify(payload) }),
+  checkInventory: (id: number) => apiFetch<import('./store/orderStore').OrderRecord>(`/api/orders/${id}/check-inventory`, { method: 'POST' }),
+  recheckInventory: (id: number) => apiFetch<import('./store/orderStore').OrderRecord>(`/api/orders/${id}/recheck-inventory`, { method: 'POST' }),
+  cancel: (id: number) => apiFetch<import('./store/orderStore').OrderRecord>(`/api/orders/${id}/cancel`, { method: 'POST' }),
 }
