@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useNotificationStore } from "@/lib/store";
+import { adminFetch } from "@/lib/api/adminClient";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState({
@@ -25,15 +26,15 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const addNotification = useNotificationStore((s) => s.addNotification);
   useEffect(() => {
-    fetch("/api/admin")
-      .then((r) => r.json())
-      .then((d) => setSettings(d.settings))
+    void adminFetch<{ settings: typeof settings }>()
+      .then((data) => setSettings(data.settings))
+      .catch((error) => addNotification("error", error instanceof Error ? error.message : "系统设置加载失败"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [addNotification]);
   const update = (key: string, value: string | boolean) =>
     setSettings((s) => ({ ...s, [key]: value }));
   const save = async () => {
-    await fetch("/api/admin", {
+    await adminFetch({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(settings),

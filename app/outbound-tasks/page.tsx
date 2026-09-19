@@ -1,358 +1,168 @@
-"use client";
+'use client'
 
-import { useState, useMemo } from "react";
-import { ArrowUpRight, AlertCircle, Check, Search } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
-
-const mockOutboundTasks = [
-  {
-    id: 1,
-    orderNo: "SO-20260918024",
-    customerName: "杭州云川贸易有限公司",
-    records: [
-      {
-        recordId: 1,
-        sku: "AL-CN-024",
-        name: "铝合金连接件",
-        planned: 240,
-        actual: null,
-        status: "PENDING",
-      },
-    ],
-    createdAt: "2026-09-18 10:42",
-  },
-  {
-    id: 2,
-    orderNo: "SO-20260918023",
-    customerName: "上海远洋工业",
-    records: [
-      {
-        recordId: 2,
-        sku: "SS-BL-120",
-        name: "不锈钢螺栓",
-        planned: 1200,
-        actual: null,
-        status: "PENDING",
-      },
-    ],
-    createdAt: "2026-09-18 09:18",
-  },
-  {
-    id: 3,
-    orderNo: "SO-20260918010",
-    customerName: "南京物流有限公司",
-    records: [
-      {
-        recordId: 3,
-        sku: "CF-FL-048",
-        name: "碳钢法兰",
-        planned: 48,
-        actual: 45,
-        status: "COMPLETED",
-        difference: 3,
-        reason: "现场发现3件破损，已剔除",
-      },
-      {
-        recordId: 4,
-        sku: "AL-CN-024",
-        name: "铝合金连接件",
-        planned: 300,
-        actual: 300,
-        status: "COMPLETED",
-        difference: 0,
-      },
-    ],
-    createdAt: "2026-09-17 11:30",
-  },
-];
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Check, Loader2, RefreshCw, Search, Truck } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { outboundApi, type OutboundRecord } from '@/lib/api/outboundClient'
+import { can } from '@/lib/permissions'
+import { useUserStore } from '@/lib/store/userStore'
 
 export default function OutboundTasksPage() {
-  const [search, setSearch] = useState("");
-  const [completeTaskId, setCompleteTaskId] = useState<number | null>(null);
-  const [completeQuantity, setCompleteQuantity] = useState("");
-  const [completeDifference, setCompleteDifference] = useState("");
-  const [isCompleteOpen, setIsCompleteOpen] = useState(false);
+  const role = useUserStore((state) => state.user?.role)
+  const canRead = can(role, 'outbound:read')
+  const canWrite = can(role, 'outbound:write')
+  const [tasks, setTasks] = useState<OutboundRecord[]>([])
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [selected, setSelected] = useState<OutboundRecord | null>(null)
+  const [actualQuantity, setActualQuantity] = useState('')
+  const [differenceReason, setDifferenceReason] = useState('')
 
-  const filteredTasks = useMemo(() => {
-    return mockOutboundTasks.filter((task) =>
-      `${task.orderNo}${task.customerName}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
-    );
-  }, [search]);
+  const loadTasks = useCallback(async () => {
+    if (!canRead) return
+    setLoading(true)
+    try {
+      setTasks(await outboundApi.list())
+      setError('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '出库任务加载失败')
+    } finally {
+      setLoading(false)
+    }
+  }, [canRead])
 
-  const pendingRecords = mockOutboundTasks.flatMap((task) =>
-    task.records
-      .filter((r) => r.status === "PENDING")
-      .map((r) => ({ ...r, orderNo: task.orderNo })),
-  );
+  useEffect(() => {
+    void loadTasks()
+  }, [loadTasks])
 
-  const handleCompleteTask = (recordId: number) => {
-    setCompleteTaskId(recordId);
-    setCompleteQuantity("");
-    setCompleteDifference("");
-    setIsCompleteOpen(true);
-  };
+  const filteredTasks = useMemo(() => tasks.filter((task) =>
+    `${task.orderNo}${task.customerName}${task.sku}${task.productName}`
+      .toLowerCase().includes(search.trim().toLowerCase())
+  ), [tasks, search])
+
+  const pendingCount = tasks.filter((task) => task.status === 'PENDING').length
+  const completedCount = tasks.filter((task) => task.status === 'COMPLETED').length
+  const differenceCount = tasks.filter((task) =>
+    task.status === 'COMPLETED' && task.actualQuantity !== task.plannedQuantity
+  ).length
+
+  const openComplete = (task: OutboundRecord) => {
+    if (!canWrite || task.status !== 'PENDING') return
+    setSelected(task)
+    setActualQuantity(String(task.plannedQuantity))
+    setDifferenceReason('')
+    setError('')
+  }
+
+  const quantity = Number(actualQuantity)
+  const hasDifference = selected !== null && quantity !== selected.plannedQuantity
+  const validQuantity = selected !== null &&
+    Number.isFinite(quantity) && quantity > 0 && quantity <= selected.plannedQuantity
+  const canSubmit = canWrite && validQuantity &&
+    (!hasDifference || differenceReason.trim().length > 0) && !saving
+
+  const completeTask = async () => {
+    if (!selected || !canSubmit) return
+    setSaving(true)
+    try {
+      await outboundApi.complete(selected.id, quantity, hasDifference ? differenceReason.trim() : undefined)
+      setSelected(null)
+      await loadTasks()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '确认出库失败')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa]">
-      <div className="mx-auto max-w-[1440px] p-6 lg:p-9">
-        <div className="mb-7">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-              <ArrowUpRight size={20} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">
-                待出库任务
-              </h1>
-              <p className="mt-1 text-sm text-slate-500">确认出库和库存扣减</p>
-            </div>
+    <main className="min-h-screen bg-[#f7f8fa] p-4 sm:p-6 lg:p-9">
+      <div className="mx-auto max-w-[1440px] space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold">待出库任务</h1>
+            <p className="mt-2 text-sm text-slate-500">仓库人员核实实际出库数量并确认扣减库存</p>
           </div>
+          <Button variant="outline" onClick={() => void loadTasks()} disabled={loading}>
+            <RefreshCw className="size-4" />刷新数据
+          </Button>
         </div>
 
-        <div className="mb-6 grid gap-4 sm:grid-cols-3">
-          <Card className="border-slate-200 shadow-none">
-            <CardContent className="p-5">
-              <p className="text-xs text-slate-500">待处理任务</p>
-              <p className="mt-3 text-3xl font-semibold">
-                {pendingRecords.length}
-              </p>
-              <p className="mt-2 text-xs text-slate-400">需立即处理</p>
-            </CardContent>
-          </Card>
-          <Card className="border-slate-200 shadow-none">
-            <CardContent className="p-5">
-              <p className="text-xs text-slate-500">已完成订单</p>
-              <p className="mt-3 text-3xl font-semibold">
-                {
-                  mockOutboundTasks.filter((t) =>
-                    t.records.every((r) => r.status === "COMPLETED"),
-                  ).length
-                }
-              </p>
-              <p className="mt-2 text-xs text-emerald-600">已出库完成</p>
-            </CardContent>
-          </Card>
-          <Card className="border-slate-200 shadow-none">
-            <CardContent className="p-5">
-              <p className="text-xs text-slate-500">出库数量差异</p>
-              <p className="mt-3 text-3xl font-semibold">
-                {mockOutboundTasks
-                  .flatMap((t) => t.records)
-                  .filter(
-                    (r) =>
-                      r.status === "COMPLETED" &&
-                      r.difference &&
-                      r.difference > 0,
-                  )
-                  .reduce((sum, r) => sum + (r.difference || 0), 0)}
-              </p>
-              <p className="mt-2 text-xs text-amber-600">需人工说明</p>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card><CardContent className="p-5"><p className="text-xs text-slate-500">待处理任务</p><p className="mt-3 text-3xl font-semibold">{pendingCount}</p></CardContent></Card>
+          <Card><CardContent className="p-5"><p className="text-xs text-slate-500">已完成任务</p><p className="mt-3 text-3xl font-semibold">{completedCount}</p></CardContent></Card>
+          <Card><CardContent className="p-5"><p className="text-xs text-slate-500">数量差异记录</p><p className="mt-3 text-3xl font-semibold">{differenceCount}</p></CardContent></Card>
         </div>
 
-        <Card className="mb-6 border-slate-200 shadow-none">
-          <CardContent className="pt-6">
+        <Card>
+          <CardContent className="p-5">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="搜索订单号、客户名称..."
-                className="pl-9"
-              />
+              <Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索订单、客户、商品或 SKU" />
             </div>
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
-          {filteredTasks.map((task) => (
-            <Card key={task.id} className="border-slate-200 shadow-none">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
+        {error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+        {loading ? <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="size-4 animate-spin" />正在加载出库任务...</div> :
+          filteredTasks.length === 0 ? <p className="py-10 text-center text-sm text-slate-500">暂无出库任务</p> :
+          <div className="space-y-4">
+            {filteredTasks.map((task) => (
+              <Card key={task.id}>
+                <CardHeader className="flex flex-row items-start justify-between gap-4">
                   <div>
-                    <CardTitle className="text-base font-semibold">
-                      {task.orderNo}
-                    </CardTitle>
-                    <CardDescription>{task.customerName}</CardDescription>
+                    <CardTitle className="text-base">{task.orderNo}</CardTitle>
+                    <CardDescription>{task.customerName} · {task.recordNo}</CardDescription>
                   </div>
-                  <span className="text-xs text-slate-400">
-                    创建于 {task.createdAt}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {task.records.map((record) => (
-                  <div
-                    key={record.recordId}
-                    className="rounded-lg border border-slate-200 p-4"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="font-mono text-xs font-medium text-slate-700">
-                          {record.sku}
-                        </p>
-                        <p className="text-sm font-medium text-slate-900">
-                          {record.name}
-                        </p>
-                      </div>
-                      {record.status === "PENDING" ? (
-                        <Badge
-                          className="bg-blue-100 text-blue-700 border-blue-200"
-                          variant="outline"
-                        >
-                          待处理
-                        </Badge>
-                      ) : (
-                        <Badge
-                          className="bg-emerald-100 text-emerald-700 border-emerald-200"
-                          variant="outline"
-                        >
-                          已完成
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div className="rounded-lg bg-slate-50 p-2">
-                        <p className="text-xs text-slate-500">计划出库</p>
-                        <p className="mt-1 text-lg font-semibold text-slate-900">
-                          {record.planned}
-                        </p>
-                      </div>
-                      <div className="rounded-lg bg-slate-50 p-2">
-                        <p className="text-xs text-slate-500">实际出库</p>
-                        <p className="mt-1 text-lg font-semibold text-slate-900">
-                          {record.actual !== null ? record.actual : "—"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {record.status === "COMPLETED" &&
-                      record.difference &&
-                      record.difference > 0 && (
-                        <Alert className="border-amber-200 bg-amber-50 mb-3">
-                          <AlertCircle className="h-4 w-4 text-amber-600" />
-                          <AlertDescription className="text-xs text-amber-700">
-                            {record.reason}
-                          </AlertDescription>
-                        </Alert>
-                      )}
-
-                    {record.status === "PENDING" && (
-                      <Dialog
-                        open={
-                          isCompleteOpen && completeTaskId === record.recordId
-                        }
-                        onOpenChange={setIsCompleteOpen}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            onClick={() => handleCompleteTask(record.recordId)}
-                            className="w-full bg-emerald-600 hover:bg-emerald-700"
-                          >
-                            <Check size={16} data-icon="inline-start" />
-                            确认出库
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>确认出库</DialogTitle>
-                            <DialogDescription>
-                              {record.name} - 计划出库数量: {record.planned}
-                            </DialogDescription>
-                          </DialogHeader>
-                          <FieldGroup className="space-y-4">
-                            <Field>
-                              <FieldLabel htmlFor="actual-qty">
-                                实际出库数量
-                              </FieldLabel>
-                              <Input
-                                id="actual-qty"
-                                type="number"
-                                value={completeQuantity}
-                                onChange={(e) =>
-                                  setCompleteQuantity(e.target.value)
-                                }
-                                placeholder={`请输入实际数量 (1-${record.planned})`}
-                                min="1"
-                                max={record.planned}
-                              />
-                              <p className="mt-1 text-xs text-slate-500">
-                                必须大于 0，且不能超过 {record.planned}
-                              </p>
-                            </Field>
-
-                            {completeQuantity &&
-                              Number(completeQuantity) !== record.planned && (
-                                <Field>
-                                  <FieldLabel htmlFor="difference-reason">
-                                    差异说明{" "}
-                                    <span className="text-red-600">*</span>
-                                  </FieldLabel>
-                                  <textarea
-                                    id="difference-reason"
-                                    value={completeDifference}
-                                    onChange={(e) =>
-                                      setCompleteDifference(e.target.value)
-                                    }
-                                    placeholder="请说明数量差异原因，如破损、错发等"
-                                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                                    rows={3}
-                                  />
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    数量差异时必须填写原因说明
-                                  </p>
-                                </Field>
-                              )}
-                          </FieldGroup>
-                          <DialogFooter>
-                            <Button
-                              variant="outline"
-                              onClick={() => setIsCompleteOpen(false)}
-                            >
-                              取消
-                            </Button>
-                            <Button
-                              className="bg-slate-900 hover:bg-slate-800"
-                              onClick={() => setIsCompleteOpen(false)}
-                              disabled={!completeQuantity}
-                            >
-                              确认出库
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                    )}
+                  <Badge variant="outline">{task.status === 'PENDING' ? '待出库' : task.status === 'COMPLETED' ? '已完成' : '已取消'}</Badge>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="flex items-center gap-2"><Truck className="size-4 text-slate-400" />{task.productName} · {task.sku}</div>
+                  <div className="flex flex-wrap gap-6 text-slate-600">
+                    <span>计划数量：{task.plannedQuantity} {task.unit}</span>
+                    <span>实际数量：{task.actualQuantity ?? '—'} {task.unit}</span>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  {task.differenceReason && <p className="text-amber-700">差异说明：{task.differenceReason}</p>}
+                  {canWrite && task.status === 'PENDING' &&
+                    <Button onClick={() => openComplete(task)}><Check className="size-4" />确认出库</Button>}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        }
+
+        <Dialog open={selected !== null} onOpenChange={(open) => { if (!open && !saving) setSelected(null) }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>确认出库</DialogTitle>
+              <DialogDescription>{selected?.productName} · 计划出库 {selected?.plannedQuantity} {selected?.unit}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <label className="block space-y-2 text-sm">
+                <span>实际出库数量</span>
+                <Input type="number" min="0.001" step="0.001" max={selected?.plannedQuantity} value={actualQuantity} onChange={(event) => setActualQuantity(event.target.value)} />
+              </label>
+              {hasDifference &&
+                <label className="block space-y-2 text-sm">
+                  <span>差异原因（必填）</span>
+                  <Input value={differenceReason} onChange={(event) => setDifferenceReason(event.target.value)} maxLength={500} placeholder="请输入实际出库与计划数量不同的原因" />
+                </label>}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" disabled={saving} onClick={() => setSelected(null)}>取消</Button>
+              <Button disabled={!canSubmit} onClick={() => void completeTask()}>
+                {saving ? '提交中...' : '确认出库'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </div>
-  );
+    </main>
+  )
 }
