@@ -345,7 +345,7 @@ export default function Page() {
                           {order.time}
                         </TableCell>
                       </TableRow>
-                    ))) :     <TableRow className="pl-6 flex items-center">当前暂无订单</TableRow>                
+                    ))) :     <TableRow><TableCell colSpan={4} className="h-24 text-center text-sm text-slate-400">当前暂无订单</TableCell></TableRow>                
                     }
                   </TableBody>
                 </Table>
