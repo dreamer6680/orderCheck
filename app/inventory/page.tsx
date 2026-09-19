@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 import { api } from '@/lib/api/client'
+import { useUserStore } from '@/lib/store/userStore'
+import { can } from '@/lib/permissions'
 import type { InboundResult, InventoryProjection, ProductResponse } from '@/lib/api/generated'
 
 type InventoryRow = {
@@ -39,6 +41,8 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function InventoryPage() {
+  const role = useUserStore((state) => state.user?.role)
+  const canWriteInventory = can(role, 'inventory:write')
   const [search, setSearch] = useState('')
   const [isInboundOpen, setIsInboundOpen] = useState(false)
   const [inventory, setInventory] = useState<InventoryProjection[]>([])
@@ -56,7 +60,7 @@ export default function InventoryPage() {
       const [inventoryData, productData, inboundData] = await Promise.all([
         api.listInventory(),
         api.listProducts(),
-        api.listInboundRecords(),
+        canWriteInventory ? api.listInboundRecords() : Promise.resolve([] as InboundResult[]),
       ])
       setInventory(inventoryData)
       setProducts(productData)
@@ -111,7 +115,7 @@ export default function InventoryPage() {
   const submitInbound = async () => {
     const selectedProductId = Number(productId)
     const inboundQuantity = Number(quantity)
-    if (!selectedProductId || inboundQuantity <= 0) return
+    if (!canWriteInventory || !selectedProductId || inboundQuantity <= 0) return
     await api.recordInbound({
       productId: selectedProductId,
       quantity: inboundQuantity,
@@ -130,9 +134,9 @@ export default function InventoryPage() {
         <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">库存与入库</h1>
-            <p className="mt-2 text-sm text-slate-500">查看实时库存状态和登记入库</p>
+            <p className="mt-2 text-sm text-slate-500">查看实时库存数量</p>
           </div>
-          <Dialog open={isInboundOpen} onOpenChange={setIsInboundOpen}>
+          {canWriteInventory && <Dialog open={isInboundOpen} onOpenChange={setIsInboundOpen}>
             <DialogTrigger asChild>
               <Button className="bg-slate-900 hover:bg-slate-800">
                 <Plus size={16} data-icon="inline-start" />
@@ -181,7 +185,7 @@ export default function InventoryPage() {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+          </Dialog>}
         </div>
 
         <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -194,7 +198,7 @@ export default function InventoryPage() {
               </p>
             </CardContent>
           </Card>
-          <Card className="border-slate-200 shadow-none">
+          {canWriteInventory && <Card className="border-slate-200 shadow-none">
             <CardContent className="p-5">
               <p className="text-xs text-slate-500">待出库占用</p>
               <p className="mt-3 text-3xl font-semibold">{totalPending.toLocaleString()}</p>
@@ -202,7 +206,7 @@ export default function InventoryPage() {
                 <TrendingUp size={12} className="text-amber-500" /> 今日新增
               </p>
             </CardContent>
-          </Card>
+          </Card>}
           <Card className="border-slate-200 shadow-none">
             <CardContent className="p-5">
               <p className="text-xs text-slate-500">可用库存</p>
@@ -228,9 +232,9 @@ export default function InventoryPage() {
             <TabsTrigger value="inventory" className="border-b-2 border-transparent data-[state=active]:border-slate-900">
               库存一览
             </TabsTrigger>
-            <TabsTrigger value="inbound" className="border-b-2 border-transparent data-[state=active]:border-slate-900">
+            {canWriteInventory && <TabsTrigger value="inbound" className="border-b-2 border-transparent data-[state=active]:border-slate-900">
               入库历史
-            </TabsTrigger>
+            </TabsTrigger>}
           </TabsList>
 
           <TabsContent value="inventory">
@@ -257,10 +261,10 @@ export default function InventoryPage() {
                         <TableHead className="text-xs">SKU</TableHead>
                         <TableHead className="text-xs">商品名称</TableHead>
                         <TableHead className="text-right text-xs">实际库存</TableHead>
-                        <TableHead className="text-right text-xs">待出库</TableHead>
+                        {canWriteInventory && <TableHead className="text-right text-xs">待出库</TableHead>}
                         <TableHead className="text-right text-xs">可用库存</TableHead>
-                        <TableHead className="text-right text-xs">安全库存</TableHead>
-                        <TableHead className="text-xs">状态</TableHead>
+                        {canWriteInventory && <TableHead className="text-right text-xs">安全库存</TableHead>}
+                        {canWriteInventory && <TableHead className="text-xs">状态</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -269,16 +273,16 @@ export default function InventoryPage() {
                           <TableCell className="font-mono text-xs font-medium">{item.sku}</TableCell>
                           <TableCell className="text-xs text-slate-600">{item.name}</TableCell>
                           <TableCell className="text-right text-xs font-medium">{item.actual.toLocaleString()}</TableCell>
-                          <TableCell className="text-right text-xs text-amber-700">
+                          {canWriteInventory && <TableCell className="text-right text-xs text-amber-700">
                             {item.reserved > 0 ? item.reserved.toLocaleString() : '-'}
-                          </TableCell>
+                          </TableCell>}
                           <TableCell className="text-right text-xs font-medium text-emerald-700">
                             {item.available.toLocaleString()}
                           </TableCell>
-                          <TableCell className="text-right text-xs text-slate-500">{item.safety.toLocaleString()}</TableCell>
-                          <TableCell>
+                          {canWriteInventory && <TableCell className="text-right text-xs text-slate-500">{item.safety.toLocaleString()}</TableCell>}
+                          {canWriteInventory && <TableCell>
                             <StatusBadge status={item.status} />
-                          </TableCell>
+                          </TableCell>}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -288,7 +292,7 @@ export default function InventoryPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="inbound">
+          {canWriteInventory && <TabsContent value="inbound">
             <Card className="border-slate-200 shadow-none">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">最近入库记录</CardTitle>
@@ -321,7 +325,7 @@ export default function InventoryPage() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent>}
         </Tabs>
       </div>
     </div>

@@ -18,6 +18,7 @@ export interface UserState {
   setError: (error: string | null) => void
   hasRole: (role: User['role']) => boolean
   restoreSession: () => void
+  verifySession: () => Promise<boolean>
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -30,14 +31,24 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const data = await api.login({ username, password })
-      set({
-        user: data.user,
-        token: data.token,
-        isLoading: false,
-      })
+      const account = data.user
+      if (!data.token || !account ||
+          typeof account.id !== 'number' ||
+          typeof account.username !== 'string' ||
+          typeof account.displayName !== 'string' ||
+          !['SALES', 'WAREHOUSE', 'MANAGER'].includes(String(account.role))) {
+        throw new Error('登录服务返回的用户信息无效')
+      }
+      const user: User = {
+        id: account.id,
+        username: account.username,
+        displayName: account.displayName,
+        role: account.role!,
+      }
 
       localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      localStorage.setItem('user', JSON.stringify(user))
+      set({ user, token: data.token, isLoading: false })
     } catch (error) {
       const message = error instanceof Error ? error.message : '登录失败'
       set({ error: message, isLoading: false })
@@ -56,6 +67,38 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 
   hasRole: (role) => get().user?.role === role,
+
+  verifySession: async () => {
+    if (typeof window === 'undefined') return false
+    const token = localStorage.getItem('token')
+    if (!token) {
+      set({ user: null, token: null })
+      return false
+    }
+    try {
+      const response = await fetch('/backend/api/auth/me', {
+        headers: { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` },
+        cache: 'no-store',
+      })
+      if (!response.ok) throw new Error(`Session verification failed: ${response.status}`)
+      const user: unknown = await response.json()
+      if (typeof user !== 'object' || user === null ||
+          !('id' in user) || typeof user.id !== 'number' ||
+          !('username' in user) || typeof user.username !== 'string' ||
+          !('displayName' in user) || typeof user.displayName !== 'string' ||
+          !('role' in user) || !['SALES', 'WAREHOUSE', 'MANAGER'].includes(String(user.role))) {
+        throw new Error('Invalid current-user response')
+      }
+      set({ token, user: user as User })
+      localStorage.setItem('user', JSON.stringify(user))
+      return true
+    } catch {
+      set({ user: null, token: null })
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
+      return false
+    }
+  },
 
   restoreSession: () => {
     if (typeof window === 'undefined') return

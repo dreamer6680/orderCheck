@@ -37,6 +37,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/lib/api/client";
+import { useUserStore } from "@/lib/store/userStore";
+import { can } from "@/lib/permissions";
 import type {
   InventoryProjection,
   OrderResponse,
@@ -76,6 +78,9 @@ function StatusBadge({
 
 export default function Page() {
   const router = useRouter();
+  const role = useUserStore((state) => state.user?.role);
+  const canReadOrders = can(role, "orders:read");
+  const canWriteOrders = can(role, "orders:write");
   const [showAll, setShowAll] = useState(false);
   const [search, setSearch] = useState("");
   const [orders, setOrders] = useState<OrderResponse[]>([]);
@@ -84,7 +89,7 @@ export default function Page() {
 
   const loadDashboard = async () => {
     const [orderData, stockData, productData] = await Promise.all([
-      api.listOrders({ size: 20 }),
+      canReadOrders ? api.listOrders({ size: 20 }) : Promise.resolve([] as OrderResponse[]),
       api.listInventory(),
       api.listProducts(),
     ]);
@@ -101,7 +106,7 @@ export default function Page() {
       return;
     }
     void loadDashboard();
-  }, [router]);
+  }, [router, canReadOrders]);
 
   const statusMeta: Record<string, { label: string; type: string }> = {
     PENDING_CHECK: { label: "待核查", type: "pending" },
@@ -224,13 +229,13 @@ export default function Page() {
                 运营概览
               </h2>
             </div>
-            <Button
+            {canWriteOrders && <Button
               className="bg-slate-900 text-white hover:bg-slate-800"
               onClick={() => router.push("/orders")}
             >
               <Plus data-icon="inline-start" />
               创建客户订单
-            </Button>
+            </Button>}
           </div>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard
@@ -263,7 +268,7 @@ export default function Page() {
             />
           </section>
           <div className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-            <Card className="border-slate-200 shadow-none">
+            {canReadOrders && <Card className="border-slate-200 shadow-none">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
                   <CardTitle className="text-base">近期客户订单</CardTitle>
@@ -323,7 +328,7 @@ export default function Page() {
                   </TableBody>
                 </Table>
               </CardContent>
-            </Card>
+            </Card>}
             <Card className="border-slate-200 shadow-none">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>

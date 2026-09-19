@@ -1,3 +1,6 @@
+import { can, type Permission } from '../permissions'
+import { useUserStore } from '../store/userStore'
+import { apiFetch } from '../api-client'
 import * as generated from "./generated";
 import type {
   AbnormalParams,
@@ -7,6 +10,23 @@ import type {
   ListParams,
   LoginRequest,
 } from "./generated";
+
+const requirePermission = (permission: Permission) => {
+  const { user, restoreSession } = useUserStore.getState()
+  if (!user && typeof window !== 'undefined') restoreSession()
+  if (!can(useUserStore.getState().user?.role, permission)) {
+    throw new Error('无权执行此操作')
+  }
+}
+
+const authorized = <T>(permission: Permission, request: () => Promise<T>): Promise<T> => {
+  try {
+    requirePermission(permission)
+    return request()
+  } catch (error) {
+    return Promise.reject(error)
+  }
+}
 
 const authOptions = (): RequestInit => {
   if (typeof window === "undefined") return {};
@@ -56,27 +76,30 @@ const unwrap = async <T>(promise: Promise<{ data: T; status: number }>): Promise
 
 export const api = {
   login: (body: LoginRequest) => unwrap(generated.login(body)),
-  currentUser: () => unwrap(generated.currentUser(mergeOptions())),
-  listOrders: (params?: ListParams) => unwrap(generated.list(params, mergeOptions())),
-  orderDetail: (id: number) => unwrap(generated.detail(id, mergeOptions())),
-  createOrder: (body: CreateOrderRequest) => unwrap(generated.create(body, mergeOptions())),
-  checkOrder: (id: number) => unwrap(generated.check(id, mergeOptions())),
-  recheckOrder: (id: number) => unwrap(generated.recheck(id, mergeOptions())),
-  cancelOrder: (id: number) => unwrap(generated.cancel(id, mergeOptions())),
-  abnormalOrders: (params?: AbnormalParams) => unwrap(generated.abnormal(params, mergeOptions())),
-  listInventory: () => unwrap(generated.listInventory(mergeOptions())),
+  currentUser: () => authorized('dashboard:view', () => unwrap(generated.currentUser(mergeOptions()))),
+  listOrders: (params?: ListParams) => authorized('orders:read', () => unwrap(generated.list(params, mergeOptions()))),
+  orderDetail: (id: number) => authorized('orders:read', () => unwrap(generated.detail(id, mergeOptions()))),
+  createOrder: (body: CreateOrderRequest) => authorized('orders:write', () => unwrap(generated.create(body, mergeOptions()))),
+  checkOrder: (id: number) => authorized('orders:write', () => unwrap(generated.check(id, mergeOptions()))),
+  recheckOrder: (id: number) => authorized('orders:write', () => unwrap(generated.recheck(id, mergeOptions()))),
+  cancelOrder: (id: number) => authorized('orders:write', () => unwrap(generated.cancel(id, mergeOptions()))),
+  abnormalOrders: (params?: AbnormalParams) => authorized('orders:read', () => unwrap(generated.abnormal(params, mergeOptions()))),
+  listInventory: () => authorized('inventory:read', () =>
+    useUserStore.getState().user?.role === 'SALES'
+      ? apiFetch<generated.InventoryProjection[]>('/api/inventory/quantities')
+      : unwrap(generated.listInventory(mergeOptions()))),
   inventoryForProduct: (productId: number) =>
-    unwrap(generated.inventoryForProduct(productId, mergeOptions())),
+    authorized('inventory:read', () => unwrap(generated.inventoryForProduct(productId, mergeOptions()))),
   listInboundRecords: (params?: ListInboundRecordsParams) =>
-    unwrap(generated.listInboundRecords(params, mergeOptions())),
+    authorized('inventory:write', () => unwrap(generated.listInboundRecords(params, mergeOptions()))),
   recordInbound: (body: InboundRequest) =>
-    unwrap(generated.recordInbound(body, mergeOptions())),
-  listProducts: () => unwrap(generated.listProducts(mergeOptions())),
-  getProduct: (id: number) => unwrap(generated.getProduct(id, mergeOptions())),
+    authorized('inventory:write', () => unwrap(generated.recordInbound(body, mergeOptions()))),
+  listProducts: () => authorized('products:read', () => unwrap(generated.listProducts(mergeOptions()))),
+  getProduct: (id: number) => authorized('products:read', () => unwrap(generated.getProduct(id, mergeOptions()))),
   createProduct: (body: generated.ProductRequest) =>
-    unwrap(generated.createProduct(body, mergeOptions())),
+    authorized('products:write', () => unwrap(generated.createProduct(body, mergeOptions()))),
   updateProduct: (id: number, body: generated.ProductRequest) =>
-    unwrap(generated.updateProduct(id, body, mergeOptions())),
+    authorized('products:write', () => unwrap(generated.updateProduct(id, body, mergeOptions()))),
   deleteProduct: (id: number) =>
-    unwrap(generated.deleteProduct(id, mergeOptions())),
-};
+    authorized('products:write', () => unwrap(generated.deleteProduct(id, mergeOptions()))),
+}

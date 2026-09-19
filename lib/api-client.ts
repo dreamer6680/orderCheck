@@ -1,3 +1,6 @@
+import { can, type Permission } from './permissions'
+import { useUserStore } from './store/userStore'
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '/backend'
 
 export class ApiError extends Error {
@@ -10,6 +13,15 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const method = (init?.method ?? 'GET').toUpperCase()
+  const permission: Permission = path.startsWith('/api/orders')
+    ? (method === 'GET' ? 'orders:read' : 'orders:write')
+    : path.startsWith('/api/outbound-records')
+      ? (method === 'GET' ? 'outbound:read' : 'outbound:write')
+      : 'dashboard:view'
+  const userStore = useUserStore.getState()
+  if (!userStore.user && typeof window !== 'undefined') userStore.restoreSession()
+  if (!can(useUserStore.getState().user?.role, permission)) throw new ApiError('无权执行此操作', 403)
   const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') : null
   const authorization = token ? (token.startsWith('Bearer ') ? token : `Bearer ${token}`) : null
   const response = await fetch(`${API_BASE_URL}${path}`, {
