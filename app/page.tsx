@@ -432,10 +432,11 @@ export default function Page() {
                     />
                     <ProgressItem
                       icon={Truck}
-                      label="今日待出库"
+                      label="今日需交付"
                       value={warehouseProgress.todayPendingOutboundCount}
+                      unit="单"
                       progress={warehouseProgress.todayPendingOutboundPercent}
-                      note={`今日计划待出库 ${warehouseProgress.todayPendingOutboundCount} / 全部待出库任务 ${warehouseProgress.pendingOutboundCount} 笔；待出库订单 ${warehouseProgress.pendingOutboundOrderCount} 单`}
+                      note={`今日需交付且仍待出库 ${warehouseProgress.todayPendingOutboundCount} / 全部待出库订单 ${warehouseProgress.pendingOutboundOrderCount} 单；待执行出库明细 ${warehouseProgress.pendingOutboundCount} 笔`}
                       color="bg-emerald-500"
                     />
                     <ProgressItem
