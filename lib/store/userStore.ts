@@ -17,6 +17,7 @@ export interface UserState {
   logout: () => void
   setError: (error: string | null) => void
   hasRole: (role: User['role']) => boolean
+  restoreSession: () => void
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -55,5 +56,27 @@ export const useUserStore = create<UserState>((set, get) => ({
   },
 
   hasRole: (role) => get().user?.role === role,
+
+  restoreSession: () => {
+    if (typeof window === 'undefined') return
+    const token = localStorage.getItem('token')
+    const savedUser = localStorage.getItem('user')
+    if (!token || !savedUser) return
+    try {
+      const user: unknown = JSON.parse(savedUser)
+      if (
+        typeof user !== 'object' || user === null ||
+        !('id' in user) || typeof user.id !== 'number' ||
+        !('username' in user) || typeof user.username !== 'string' ||
+        !('displayName' in user) || typeof user.displayName !== 'string' ||
+        !('role' in user) || !['SALES', 'WAREHOUSE', 'MANAGER'].includes(String(user.role))
+      ) throw new Error('Invalid saved user')
+      set({ token, user: user as User })
+    } catch {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      set({ token: null, user: null })
+    }
+  },
 }))
 
