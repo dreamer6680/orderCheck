@@ -29,7 +29,7 @@ export function routePermission(pathname: string): Permission | null {
     { path: '/abnormal-orders', permission: 'orders:read' },
     { path: '/outbound-tasks', permission: 'outbound:read' },
     { path: '/inventory', permission: 'inventory:read' },
-    { path: '/products', permission: 'products:read' },
+    { path: '/products', permission: 'products:write' },
     { path: '/settings', permission: 'admin:manage' },
     { path: '/users', permission: 'admin:manage' },
   ]
