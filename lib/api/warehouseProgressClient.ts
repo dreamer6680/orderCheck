@@ -17,6 +17,9 @@ export interface WarehouseProgress {
   pendingOutboundOrderCount: number
   abnormalOrderCount: number
   abnormalOrderPercent: number
+  todayDuePendingOrderCount: number
+  todayDuePendingOrderPercent: number
+  undatedPendingOrderCount: number
   updatedAt: string
 }
 
@@ -34,6 +37,9 @@ const requiredMetricFields = [
   'pendingOutboundOrderCount',
   'abnormalOrderCount',
   'abnormalOrderPercent',
+  'todayDuePendingOrderCount',
+  'todayDuePendingOrderPercent',
+  'undatedPendingOrderCount',
 ] as const satisfies readonly (keyof WarehouseProgress)[]
 
 export const warehouseProgressApi = {
