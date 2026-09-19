@@ -14,7 +14,9 @@ export class ApiError extends Error {
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const method = (init?.method ?? 'GET').toUpperCase()
-  const permission: Permission = path.startsWith('/api/orders')
+  const permission: Permission = path.startsWith('/api/admin/')
+    ? 'admin:manage'
+    : path.startsWith('/api/orders')
     ? (method === 'GET' ? 'orders:read' : 'orders:write')
     : path.startsWith('/api/outbound-records')
       ? (method === 'GET' ? 'outbound:read' : 'outbound:write')
