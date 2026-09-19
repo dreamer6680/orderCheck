@@ -46,6 +46,8 @@ export interface CreateOrderRequest {
      * @maxLength 150
      */
   customerName: string;
+  /** Customer's promised delivery date, YYYY-MM-DD. */
+  deliveryDate: string;
   /** @minItems 1 */
   items: ItemRequest[];
 }
@@ -74,6 +76,7 @@ export interface OrderResponse {
   id?: number;
   orderNo?: string;
   customerName?: string;
+  deliveryDate?: string | null;
   status?: OrderResponseStatus;
   exceptionReason?: string;
   createdBy?: string;
