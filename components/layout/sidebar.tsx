@@ -58,7 +58,7 @@ export function Sidebar() {
       </div>
       <div className={`m-3 flex items-center rounded-xl bg-slate-50 p-2 ${collapsed ? 'justify-center' : 'gap-3'}`}>
         <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#dce8f3] text-xs font-semibold text-slate-700">{user?.displayName.charAt(0) || '用'}</div>
-        {!collapsed && <><div className="min-w-0 flex-1"><p className="truncate text-xs font-medium">{user?.displayName || '用户'}</p><p className="text-[11px] text-slate-400">{user?.role === 'SALES' ? '业务员' : user?.role === 'WAREHOUSE' ? '仓库人员' : '负责人'}</p></div><Button variant="ghost" size="sm" onClick={logout} className="size-6 p-0 text-slate-400 hover:text-red-600"><LogOut size={14} /></Button></>}
+        {!collapsed && <><div className="min-w-0 flex-1"><p className="truncate text-xs font-medium">{user?.displayName || '用户'}</p><p className="text-[11px] text-slate-400">{user?.role === 'SALES' ? '业务员' : user?.role === 'WAREHOUSE' ? '仓库人员' : user?.role === 'MANAGER' ? '负责人' : '未登录'}</p></div><Button variant="ghost" size="sm" onClick={logout} className="size-6 p-0 text-slate-400 hover:text-red-600"><LogOut size={14} /></Button></>}
       </div>
       <Button variant="ghost" size="sm" onClick={() => setCollapsed(!collapsed)} className="mx-3 mb-3 justify-center text-slate-400 hover:text-slate-900">{collapsed ? <PanelLeftOpen /> : <><PanelLeftClose /><span>收起导航</span></>}</Button>
     </aside>
