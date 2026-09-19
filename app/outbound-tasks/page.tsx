@@ -23,6 +23,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
+import { useUserStore } from "@/lib/store/userStore";
+import { can } from "@/lib/permissions";
 
 const mockOutboundTasks = [
   {
@@ -87,6 +89,8 @@ const mockOutboundTasks = [
 ];
 
 export default function OutboundTasksPage() {
+  const role = useUserStore((state) => state.user?.role);
+  const canWriteOutbound = can(role, "outbound:write");
   const [search, setSearch] = useState("");
   const [completeTaskId, setCompleteTaskId] = useState<number | null>(null);
   const [completeQuantity, setCompleteQuantity] = useState("");
@@ -108,6 +112,7 @@ export default function OutboundTasksPage() {
   );
 
   const handleCompleteTask = (recordId: number) => {
+    if (!canWriteOutbound) return;
     setCompleteTaskId(recordId);
     setCompleteQuantity("");
     setCompleteDifference("");
@@ -261,7 +266,7 @@ export default function OutboundTasksPage() {
                         </Alert>
                       )}
 
-                    {record.status === "PENDING" && (
+                    {canWriteOutbound && record.status === "PENDING" && (
                       <Dialog
                         open={
                           isCompleteOpen && completeTaskId === record.recordId
