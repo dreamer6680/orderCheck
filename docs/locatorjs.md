@@ -1,12 +1,19 @@
-# LocatorJS（开发环境）
+# LocatorJS（Next.js 16 + React 19）
 
-本项目使用 **LocatorJS 浏览器扩展**定位 UI 组件源代码，不再使用 Next Locator。
+已接入 **LocatorJS 项目内运行库** 和 **Turbopack 源码定位 loader**，无需 Next Locator。
 
-## 启用
+## 本地启动
 
-1. 从 [LocatorJS 官方仓库](https://github.com/infi-pc/locatorjs/tree/master/apps/extension) 安装 Chrome / Edge 浏览器扩展。
-2. 在本地代码仓库中执行 `pnpm install`、`pnpm dev`。
-3. 在浏览器打开 `http://localhost:3000`，按住 **Alt**（macOS 为 Option），移动鼠标查看组件定位框，点击定位框跳转编辑器。
-4. 在扩展设置中选用本机编辑器（例如 VS Code 或 Cursor），并允许浏览器打开对应的编辑器协议。
+```powershell
+git checkout feat/connect-orval-api
+git pull
+pnpm install --no-frozen-lockfile
+Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue
+pnpm dev
+```
 
-LocatorJS 扩展在开发模式读取 React/Next.js 的源码定位信息；**浏览器扩展必须由开发者自行安装和启用**，不能由项目的 npm 依赖自动安装到浏览器。这个方案不加载运行时代码、不修改生产构建，也无需额外 Babel/Webpack 配置。若 Next.js 16 + React 19 下扩展提示 `No source info found for this element`，先检查扩展兼容性及开发模式；不要重新安装 Next Locator 或依赖旧版 `locatorjs` 包来绕过。
+打开终端显示的本地开发地址（通常是 `http://localhost:3000`）。根布局在开发环境加载 `@locator/runtime`，按住 **Alt**（macOS 为 Option），移动鼠标定位组件并点击跳转代码。首次使用需要设置 VS Code / Cursor 等编辑器，并允许浏览器打开编辑器链接。
+
+`@locator/webpack-loader` 为 Next.js 16 Turbopack 编译注入源码定位信息。LocatorJS UI 仅在开发环境初始化。
+
+**注意：** 远程环境未能执行 `pnpm install` 更新锁文件。首次拉取后请运行上面的 `pnpm install --no-frozen-lockfile`，再提交生成的 `pnpm-lock.yaml`。更新锁文件前，`pnpm install --frozen-lockfile` 可能失败。
