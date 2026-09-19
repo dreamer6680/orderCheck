@@ -421,33 +421,29 @@ export default function Page() {
                 ) : warehouseProgressError ? (
                   <p role="alert" className="text-sm text-red-600">{warehouseProgressError}</p>
                 ) : warehouseProgress ? (
-                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <WarehouseMetric
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <ProgressItem
                       icon={ArrowDownToLine}
                       label="今日入库"
                       value={warehouseProgress.todayInboundCount}
-                      note="今日已登记入库记录"
+                      progress={warehouseProgress.todayInboundPercent}
+                      note={`今日 ${warehouseProgress.todayInboundCount} / 累计 ${warehouseProgress.totalInboundCount} 笔入库记录`}
                       color="bg-blue-500"
                     />
-                    <WarehouseMetric
-                      icon={ArrowUpRight}
-                      label="今日出库"
-                      value={warehouseProgress.todayOutboundCount}
-                      note="今日已完成出库记录"
+                    <ProgressItem
+                      icon={Truck}
+                      label="今日待出库"
+                      value={warehouseProgress.todayPendingOutboundCount}
+                      progress={warehouseProgress.todayPendingOutboundPercent}
+                      note={`今日计划待出库 ${warehouseProgress.todayPendingOutboundCount} / 全部待出库 ${warehouseProgress.pendingOutboundCount} 笔`}
                       color="bg-emerald-500"
                     />
-                    <WarehouseMetric
-                      icon={Truck}
-                      label="待出库任务"
-                      value={warehouseProgress.pendingOutboundCount}
-                      note="当前尚未完成的出库记录"
-                      color="bg-sky-500"
-                    />
-                    <WarehouseMetric
+                    <ProgressItem
                       icon={AlertTriangle}
-                      label="出库数量差异"
+                      label="数量差异记录"
                       value={warehouseProgress.differenceRecordCount}
-                      note="累计已完成且存在数量差异的记录"
+                      progress={warehouseProgress.differencePercent}
+                      note={`存在差异 ${warehouseProgress.differenceRecordCount} / 已完成出库 ${warehouseProgress.completedOutboundCount} 笔（非待处理数）`}
                       color="bg-amber-500"
                     />
                   </div>
@@ -510,19 +506,22 @@ function MetricCard({
     </Card>
   );
 }
-function WarehouseMetric({
+function ProgressItem({
   icon: Icon,
   label,
   value,
+  progress,
   note,
   color,
 }: {
   icon: React.ElementType;
   label: string;
   value: number;
+  progress: number;
   note: string;
   color: string;
 }) {
+  const percentage = Math.min(100, Math.max(0, Number.isFinite(progress) ? progress : 0));
   return (
     <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
       <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -530,11 +529,17 @@ function WarehouseMetric({
         {label}
         <span className={`ml-auto size-2 rounded-full ${color}`} />
       </div>
-      <p className="mt-4 text-2xl font-semibold">
-        {value.toLocaleString("zh-CN")}
-        <small className="ml-1 text-xs font-normal text-slate-400">笔</small>
-      </p>
-      <p className="mt-3 text-xs text-slate-400">{note}</p>
+      <div className="mt-4 flex items-end justify-between">
+        <span className="text-2xl font-semibold">
+          {value.toLocaleString("zh-CN")}
+          <small className="ml-1 text-xs font-normal text-slate-400">笔</small>
+        </span>
+        <span className="text-xs text-slate-400">{percentage.toFixed(1)}%</span>
+      </div>
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${percentage}%` }} />
+      </div>
+      <p className="mt-2 text-[11px] text-slate-400">{note}</p>
     </div>
   );
 }
