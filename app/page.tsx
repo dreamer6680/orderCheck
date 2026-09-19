@@ -8,10 +8,8 @@ import {
   ArrowUpRight,
   Bell,
   Boxes,
-  Check,
   ChevronDown,
   ClipboardList,
-  FilePlus2,
   LayoutDashboard,
   MoreHorizontal,
   PackageCheck,
@@ -37,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/lib/api/client";
+import { warehouseProgressApi, type WarehouseProgress } from "@/lib/api/warehouseProgressClient";
 import { useUserStore } from "@/lib/store/userStore";
 import { can } from "@/lib/permissions";
 import type {
@@ -81,17 +80,40 @@ export default function Page() {
   const role = useUserStore((state) => state.user?.role);
   const canReadOrders = can(role, "orders:read");
   const canWriteOrders = can(role, "orders:write");
+  const canReadWarehouse = can(role, "outbound:read");
   const [showAll, setShowAll] = useState(false);
   const [search, setSearch] = useState("");
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [inventoryData, setInventoryData] = useState<InventoryProjection[]>([]);
   const [products, setProducts] = useState<ProductResponse[]>([]);
+  const [warehouseProgress, setWarehouseProgress] = useState<WarehouseProgress | null>(null);
+  const [warehouseProgressError, setWarehouseProgressError] = useState("");
+  const [warehouseProgressLoading, setWarehouseProgressLoading] = useState(false);
 
   const loadDashboard = async () => {
+    const warehouseRequest = canReadWarehouse
+      ? (async () => {
+          setWarehouseProgressLoading(true);
+          try {
+            const progress = await warehouseProgressApi.get();
+            setWarehouseProgress(progress);
+            setWarehouseProgressError("");
+          } catch (error) {
+            setWarehouseProgress(null);
+            setWarehouseProgressError(
+              error instanceof Error ? error.message : "仓库执行进度加载失败",
+            );
+          } finally {
+            setWarehouseProgressLoading(false);
+          }
+        })()
+      : Promise.resolve();
+
     const [orderData, stockData, productData] = await Promise.all([
       canReadOrders ? api.listOrders({ size: 20 }) : Promise.resolve([] as OrderResponse[]),
       api.listInventory(),
       api.listProducts(),
+      warehouseRequest,
     ]);
     setOrders(orderData);
     setInventoryData(stockData);
@@ -106,7 +128,7 @@ export default function Page() {
       return;
     }
     void loadDashboard();
-  }, [router, canReadOrders]);
+  }, [router, canReadOrders, canReadWarehouse]);
 
   const statusMeta: Record<string, { label: string; type: string }> = {
     PENDING_CHECK: { label: "待核查", type: "pending" },
@@ -371,56 +393,77 @@ export default function Page() {
               </CardContent>
             </Card>
           </div>
-          <Card className="mt-6 border-slate-200 shadow-none">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div>
-                <CardTitle className="text-base">仓库执行进度</CardTitle>
-                <p className="mt-1 text-xs text-slate-400">
-                  今日入库与出库任务动态
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => void loadDashboard()}
-              >
-                <RefreshCw data-icon="inline-start" />
-                刷新数据
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-3">
-                <ProgressItem
-                  icon={ArrowDownToLine}
-                  label="今日入库"
-                  value="24"
-                  unit="笔"
-                  progress="72%"
-                  color="bg-blue-500"
-                />
-                <ProgressItem
-                  icon={ArrowUpRight}
-                  label="今日出库"
-                  value="18"
-                  unit="笔"
-                  progress="58%"
-                  color="bg-emerald-500"
-                />
-                <ProgressItem
-                  icon={FilePlus2}
-                  label="待处理差异"
-                  value="2"
-                  unit="笔"
-                  progress="15%"
-                  color="bg-amber-500"
-                />
-              </div>
-            </CardContent>
-          </Card>
-          <p className="mt-8 text-center text-[11px] text-slate-400">
-            数据每 5 分钟自动同步 · 最后更新于 10:45
-          </p>
+          {canReadWarehouse && (
+            <Card className="mt-6 border-slate-200 shadow-none">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div>
+                  <CardTitle className="text-base">仓库执行进度</CardTitle>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {warehouseProgress
+                      ? `业务日期 ${warehouseProgress.businessDate}（${warehouseProgress.timeZone}）`
+                      : "今日入库与出库任务动态"}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => void loadDashboard()}
+                  disabled={warehouseProgressLoading}
+                >
+                  <RefreshCw data-icon="inline-start" />
+                  刷新数据
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {warehouseProgressLoading && !warehouseProgress ? (
+                  <p className="text-sm text-slate-500">正在加载仓库执行进度...</p>
+                ) : warehouseProgressError ? (
+                  <p role="alert" className="text-sm text-red-600">{warehouseProgressError}</p>
+                ) : warehouseProgress ? (
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <WarehouseMetric
+                      icon={ArrowDownToLine}
+                      label="今日入库"
+                      value={warehouseProgress.todayInboundCount}
+                      note="今日已登记入库记录"
+                      color="bg-blue-500"
+                    />
+                    <WarehouseMetric
+                      icon={ArrowUpRight}
+                      label="今日出库"
+                      value={warehouseProgress.todayOutboundCount}
+                      note="今日已完成出库记录"
+                      color="bg-emerald-500"
+                    />
+                    <WarehouseMetric
+                      icon={Truck}
+                      label="待出库任务"
+                      value={warehouseProgress.pendingOutboundCount}
+                      note="当前尚未完成的出库记录"
+                      color="bg-sky-500"
+                    />
+                    <WarehouseMetric
+                      icon={AlertTriangle}
+                      label="出库数量差异"
+                      value={warehouseProgress.differenceRecordCount}
+                      note="累计已完成且存在数量差异的记录"
+                      color="bg-amber-500"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">暂无仓库执行进度数据</p>
+                )}
+                {warehouseProgress && !warehouseProgressError && (
+                  <p className="mt-4 text-xs text-slate-400">
+                    数据更新于 {new Date(warehouseProgress.updatedAt).toLocaleString("zh-CN", {
+                      timeZone: warehouseProgress.timeZone,
+                    })} · 点击刷新可获取最新数据
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>
@@ -467,19 +510,17 @@ function MetricCard({
     </Card>
   );
 }
-function ProgressItem({
+function WarehouseMetric({
   icon: Icon,
   label,
   value,
-  unit,
-  progress,
+  note,
   color,
 }: {
   icon: React.ElementType;
   label: string;
-  value: string;
-  unit: string;
-  progress: string;
+  value: number;
+  note: string;
   color: string;
 }) {
   return (
@@ -487,23 +528,13 @@ function ProgressItem({
       <div className="flex items-center gap-2 text-xs text-slate-500">
         <Icon data-icon="inline-start" />
         {label}
-        <Check className="ml-auto text-emerald-500" />
+        <span className={`ml-auto size-2 rounded-full ${color}`} />
       </div>
-      <div className="mt-4 flex items-end justify-between">
-        <span className="text-2xl font-semibold">
-          {value}
-          <small className="ml-1 text-xs font-normal text-slate-400">
-            {unit}
-          </small>
-        </span>
-        <span className="text-xs text-slate-400">{progress}</span>
-      </div>
-      <div className="mt-3 h-1.5 rounded-full bg-slate-200">
-        <div
-          className={`h-full rounded-full ${color}`}
-          style={{ width: progress }}
-        />
-      </div>
+      <p className="mt-4 text-2xl font-semibold">
+        {value.toLocaleString("zh-CN")}
+        <small className="ml-1 text-xs font-normal text-slate-400">笔</small>
+      </p>
+      <p className="mt-3 text-xs text-slate-400">{note}</p>
     </div>
   );
 }
