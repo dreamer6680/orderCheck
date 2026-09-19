@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { LayoutDashboard, ClipboardList, AlertTriangle, Boxes, Truck, Settings, Users, PackageCheck, LogOut, PanelLeftClose, PanelLeftOpen, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { useAuthStore } from '@/lib/store'
+import { useAuthStore } from '@/lib/store/authStore'
 
 const navItems = [
   { label: '工作台', href: '/', icon: LayoutDashboard, roles: ['SALES', 'WAREHOUSE', 'MANAGER'] },

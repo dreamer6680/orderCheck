@@ -1,36 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Eye, Loader2, Plus, RefreshCw, Search } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useOrderStore, type OrderStatus } from "@/lib/order-store";
-import { api } from "@/lib/api/client";
-import type { ProductResponse } from "@/lib/api/generated";
+import { useEffect, useMemo, useState } from 'react'
+import { Eye, Loader2, Plus, RefreshCw, Search } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { useOrderStore, type OrderStatus } from '@/lib/store/orderStore'
+import { api } from '@/lib/api/client'
+import type { ProductResponse } from '@/lib/api/generated'
 
 const statusLabels: Record<OrderStatus, string> = {
   PENDING_CHECK: "待核查",
