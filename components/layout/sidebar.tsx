@@ -24,16 +24,12 @@ const systemItems: { label: string; href: string; icon: typeof LayoutDashboard; 
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, logout, restoreSession } = useUserStore()
+  const { user, logout } = useUserStore()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const currentRole = user?.role
   const visibleNavItems = navItems.filter((item) => can(currentRole, item.permission))
   const visibleSystemItems = systemItems.filter((item) => can(currentRole, item.permission))
-
-  useEffect(() => {
-    restoreSession()
-  }, [restoreSession])
 
   useEffect(() => {
     document.body.dataset.sidebarCollapsed = String(collapsed)
