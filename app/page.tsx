@@ -421,7 +421,7 @@ export default function Page() {
                 ) : warehouseProgressError ? (
                   <p role="alert" className="text-sm text-red-600">{warehouseProgressError}</p>
                 ) : warehouseProgress ? (
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <ProgressItem
                       icon={ArrowDownToLine}
                       label="今日入库"
@@ -435,7 +435,7 @@ export default function Page() {
                       label="今日待出库"
                       value={warehouseProgress.todayPendingOutboundCount}
                       progress={warehouseProgress.todayPendingOutboundPercent}
-                      note={`今日计划待出库 ${warehouseProgress.todayPendingOutboundCount} / 全部待出库 ${warehouseProgress.pendingOutboundCount} 笔`}
+                      note={`今日计划待出库 ${warehouseProgress.todayPendingOutboundCount} / 全部待出库任务 ${warehouseProgress.pendingOutboundCount} 笔；待出库订单 ${warehouseProgress.pendingOutboundOrderCount} 单`}
                       color="bg-emerald-500"
                     />
                     <ProgressItem
@@ -445,6 +445,15 @@ export default function Page() {
                       progress={warehouseProgress.differencePercent}
                       note={`存在差异 ${warehouseProgress.differenceRecordCount} / 已完成出库 ${warehouseProgress.completedOutboundCount} 笔（非待处理数）`}
                       color="bg-amber-500"
+                    />
+                    <ProgressItem
+                      icon={AlertTriangle}
+                      label="异常订单"
+                      value={warehouseProgress.abnormalOrderCount}
+                      unit="单"
+                      progress={warehouseProgress.abnormalOrderPercent}
+                      note={`异常订单 ${warehouseProgress.abnormalOrderCount} / 全部订单 ${warehouseProgress.totalOrderCount} 单`}
+                      color="bg-red-500"
                     />
                   </div>
                 ) : (
@@ -513,6 +522,7 @@ function ProgressItem({
   progress,
   note,
   color,
+  unit = "笔",
 }: {
   icon: React.ElementType;
   label: string;
@@ -520,6 +530,7 @@ function ProgressItem({
   progress: number;
   note: string;
   color: string;
+  unit?: string;
 }) {
   const percentage = Math.min(100, Math.max(0, Number.isFinite(progress) ? progress : 0));
   return (
@@ -532,7 +543,7 @@ function ProgressItem({
       <div className="mt-4 flex items-end justify-between">
         <span className="text-2xl font-semibold">
           {value.toLocaleString("zh-CN")}
-          <small className="ml-1 text-xs font-normal text-slate-400">笔</small>
+          <small className="ml-1 text-xs font-normal text-slate-400">{unit}</small>
         </span>
         <span className="text-xs text-slate-400">{percentage.toFixed(1)}%</span>
       </div>
