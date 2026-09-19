@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { AccessGate } from '@/components/auth/accessGate'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Notifications } from '@/components/layout/notifications'
 import { LocatorJSDev } from '@/components/locatorjs-dev'
@@ -45,7 +46,7 @@ export default function RootLayout({
     <html lang="zh">
       <body className="antialiased">
         <Sidebar />
-        <div className="app-content">{children}</div>
+        <div className="app-content"><AccessGate>{children}</AccessGate></div>
         <Notifications />
         <LocatorJSDev />
         {process.env.NODE_ENV === 'production' && <Analytics />}
