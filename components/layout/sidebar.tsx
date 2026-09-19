@@ -7,18 +7,19 @@ import { LayoutDashboard, ClipboardList, AlertTriangle, Boxes, Truck, Settings, 
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useUserStore } from '@/lib/store/userStore'
+import { can, type Permission } from '@/lib/permissions'
 
-const navItems = [
-  { label: '工作台', href: '/', icon: LayoutDashboard, roles: ['SALES', 'WAREHOUSE', 'MANAGER'] },
-  { label: '客户订单', href: '/orders', icon: ClipboardList, roles: ['SALES', 'MANAGER'] },
-  { label: '异常订单', href: '/abnormal-orders', icon: AlertTriangle, roles: ['SALES', 'MANAGER'] },
-  { label: '库存与入库', href: '/inventory', icon: Boxes, roles: ['SALES', 'WAREHOUSE', 'MANAGER'] },
-  { label: '商品管理', href: '/products', icon: PackageCheck, roles: ['WAREHOUSE', 'MANAGER'] },
-  { label: '待出库任务', href: '/outbound-tasks', icon: Truck, roles: ['WAREHOUSE', 'MANAGER'] },
+const navItems: { label: string; href: string; icon: typeof LayoutDashboard; permission: Permission }[] = [
+  { label: '工作台', href: '/', icon: LayoutDashboard, permission: 'dashboard:view' },
+  { label: '客户订单', href: '/orders', icon: ClipboardList, permission: 'orders:read' },
+  { label: '异常订单', href: '/abnormal-orders', icon: AlertTriangle, permission: 'orders:read' },
+  { label: '库存一览', href: '/inventory', icon: Boxes, permission: 'inventory:read' },
+  { label: '商品管理', href: '/products', icon: PackageCheck, permission: 'products:write' },
+  { label: '待出库任务', href: '/outbound-tasks', icon: Truck, permission: 'outbound:read' },
 ]
-const systemItems = [
-  { label: '用户与权限', href: '/users', icon: Users, roles: ['MANAGER'] },
-  { label: '系统设置', href: '/settings', icon: Settings, roles: ['MANAGER'] },
+const systemItems: { label: string; href: string; icon: typeof LayoutDashboard; permission: Permission }[] = [
+  { label: '用户与权限', href: '/users', icon: Users, permission: 'admin:manage' },
+  { label: '系统设置', href: '/settings', icon: Settings, permission: 'admin:manage' },
 ]
 
 export function Sidebar() {
@@ -27,8 +28,8 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const currentRole = user?.role
-  const visibleNavItems = navItems.filter((item) => item.roles.includes(currentRole))
-  const visibleSystemItems = systemItems.filter((item) => item.roles.includes(currentRole))
+  const visibleNavItems = navItems.filter((item) => can(currentRole, item.permission))
+  const visibleSystemItems = systemItems.filter((item) => can(currentRole, item.permission))
 
   useEffect(() => {
     restoreSession()
