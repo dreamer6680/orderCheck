@@ -48,9 +48,6 @@ importers:
         specifier: ^5.0.15
         version: 5.0.15(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
     devDependencies:
-      '@next-locator/babel-plugin':
-        specifier: ^1.0.7
-        version: 1.0.7
       '@tailwindcss/postcss':
         specifier: ^4.3.3
         version: 4.3.3
@@ -630,9 +627,6 @@ packages:
     peerDependenciesMeta:
       '@cfworker/json-schema':
         optional: true
-
-  '@next-locator/babel-plugin@1.0.7':
-    resolution: {integrity: sha512-+G44P05FZ31inY8t2et+LhwF3gn8A2vgE7nHKY068thbkNUS/eXPNSUk0m1/7/KEfpAwovVq/wbmVoZsQiT+QA==}
 
   '@next/env@16.3.3':
     resolution: {integrity: sha512-U2eYQRwXj+dsqxV79zFqExDdatnNY/ZWc2nsJU1p/OgT7fd3dXwlF6OjYaFQCfMoeTA19PWq+wVmYgimVA+V+g==}
@@ -2858,14 +2852,6 @@ snapshots:
       raw-body: 3.0.2
       zod: 3.25.76
       zod-to-json-schema: 3.25.2(zod@3.25.76)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@next-locator/babel-plugin@1.0.7':
-    dependencies:
-      '@babel/core': 7.29.7
-      '@babel/plugin-syntax-jsx': 7.29.7(@babel/core@7.29.7)
-      '@babel/plugin-syntax-typescript': 7.29.7(@babel/core@7.29.7)
     transitivePeerDependencies:
       - supports-color
 
