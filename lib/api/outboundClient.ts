@@ -14,6 +14,7 @@ export interface OutboundRecord {
   unit: string
   plannedQuantity: number
   plannedOutboundDate: string
+  deliveryDate: string | null
   actualQuantity: number | null
   status: OutboundStatus
   differenceReason: string | null
@@ -28,7 +29,7 @@ export interface OutboundCheck {
 }
 
 export const outboundApi = {
-  list: () => apiFetch<OutboundRecord[]>('/api/outbound-records'),
+  list: (deliveryDate?: string) => apiFetch<OutboundRecord[]>(`/api/outbound-records${deliveryDate ? `?deliveryDate=${encodeURIComponent(deliveryDate)}` : ''}`),
 
   checkInventory: (id: number) =>
     apiFetch<OutboundCheck>(`/api/outbound-records/${id}/check-inventory`),
