@@ -1,26 +1,59 @@
-'use client'
-
+import { api } from '../api/client'
 import { create } from 'zustand'
-import type { User } from './authStore'
 
-export interface AdminUser extends User {
-  email: string
-  status: 'ACTIVE' | 'DISABLED'
-  lastLogin: string
+export interface User {
+  id: number
+  username: string
+  displayName: string
+  role: 'SALES' | 'WAREHOUSE' | 'MANAGER'
 }
 
-interface UserState {
-  users: AdminUser[]
-  selectedUserId: number | null
-  setUsers: (users: AdminUser[]) => void
-  selectUser: (id: number | null) => void
-  updateUserStatus: (id: number, status: AdminUser['status']) => void
+export interface UserState {
+  user: User | null
+  token: string | null
+  isLoading: boolean
+  error: string | null
+  login: (username: string, password: string) => Promise<void>
+  logout: () => void
+  setError: (error: string | null) => void
+  hasRole: (role: User['role']) => boolean
 }
 
-export const useUserStore = create<UserState>((set) => ({
-  users: [],
-  selectedUserId: null,
-  setUsers: (users) => set({ users }),
-  selectUser: (selectedUserId) => set({ selectedUserId }),
-  updateUserStatus: (id, status) => set((state) => ({ users: state.users.map((user) => user.id === id ? { ...user, status } : user) })),
+export const useUserStore = create<UserState>((set, get) => ({
+  user: null,
+  token: null,
+  isLoading: false,
+  error: null,
+
+  login: async (username: string, password: string) => {
+    set({ isLoading: true, error: null })
+    try {
+      const data = await api.login({ username, password })
+      set({
+        user: data.user,
+        token: data.token,
+        isLoading: false,
+      })
+
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '登录失败'
+      set({ error: message, isLoading: false })
+      throw error
+    }
+  },
+
+  logout: () => {
+    set({ user: null, token: null })
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  },
+
+  setError: (error: string | null) => {
+    set({ error })
+  },
+
+  hasRole: (role) => get().user?.role === role,
 }))
+
