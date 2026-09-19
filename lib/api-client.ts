@@ -18,7 +18,9 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     ? (method === 'GET' ? 'orders:read' : 'orders:write')
     : path.startsWith('/api/outbound-records')
       ? (method === 'GET' ? 'outbound:read' : 'outbound:write')
-      : 'dashboard:view'
+      : path === '/api/dashboard/warehouse-progress'
+        ? 'outbound:read'
+        : 'dashboard:view'
   const userStore = useUserStore.getState()
   if (!userStore.user && typeof window !== 'undefined') userStore.restoreSession()
   if (!can(useUserStore.getState().user?.role, permission)) throw new ApiError('无权执行此操作', 403)
