@@ -20,6 +20,10 @@ export interface WarehouseProgress {
   todayDuePendingOrderCount: number
   todayDuePendingOrderPercent: number
   undatedPendingOrderCount: number
+  unfulfilledOrderCount: number
+  todayDueUnfulfilledOrderCount: number
+  todayDueUnfulfilledOrderPercent: number
+  undatedUnfulfilledOrderCount: number
   updatedAt: string
 }
 
@@ -40,6 +44,10 @@ const requiredMetricFields = [
   'todayDuePendingOrderCount',
   'todayDuePendingOrderPercent',
   'undatedPendingOrderCount',
+  'unfulfilledOrderCount',
+  'todayDueUnfulfilledOrderCount',
+  'todayDueUnfulfilledOrderPercent',
+  'undatedUnfulfilledOrderCount',
 ] as const satisfies readonly (keyof WarehouseProgress)[]
 
 export const warehouseProgressApi = {
