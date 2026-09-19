@@ -16,6 +16,26 @@ export interface WarehouseProgress {
   updatedAt: string
 }
 
+const requiredMetricFields = [
+  'todayInboundCount',
+  'totalInboundCount',
+  'todayInboundPercent',
+  'todayPendingOutboundCount',
+  'pendingOutboundCount',
+  'todayPendingOutboundPercent',
+  'differenceRecordCount',
+  'completedOutboundCount',
+  'differencePercent',
+] as const satisfies readonly (keyof WarehouseProgress)[]
+
 export const warehouseProgressApi = {
-  get: () => apiFetch<WarehouseProgress>('/api/dashboard/warehouse-progress', { cache: 'no-store' }),
+  get: async (): Promise<WarehouseProgress> => {
+    const data = await apiFetch<WarehouseProgress>('/api/dashboard/warehouse-progress', { cache: 'no-store' })
+    if (!data || requiredMetricFields.some((field) =>
+      typeof data[field] !== 'number' || !Number.isFinite(data[field])
+    )) {
+      throw new Error('仓库执行进度接口字段不完整，请先更新后端到 dev 版本')
+    }
+    return data
+  },
 }
