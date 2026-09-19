@@ -14,7 +14,11 @@ export class ApiError extends Error {
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const method = (init?.method ?? 'GET').toUpperCase()
-  const permission: Permission = path.startsWith('/api/orders') ? (method === 'GET' ? 'orders:read' : 'orders:write') : 'dashboard:view'
+  const permission: Permission = path.startsWith('/api/orders')
+    ? (method === 'GET' ? 'orders:read' : 'orders:write')
+    : path.startsWith('/api/outbound-records')
+      ? (method === 'GET' ? 'outbound:read' : 'outbound:write')
+      : 'dashboard:view'
   const userStore = useUserStore.getState()
   if (!userStore.user && typeof window !== 'undefined') userStore.restoreSession()
   if (!can(useUserStore.getState().user?.role, permission)) throw new ApiError('无权执行此操作', 403)
