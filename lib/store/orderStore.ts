@@ -5,7 +5,7 @@ import { orderApi } from '../api-client'
 
 export type OrderStatus = 'PENDING_CHECK' | 'PENDING_OUTBOUND' | 'ABNORMAL' | 'COMPLETED'
 export interface OrderItem { sku: string; name: string; quantity: number }
-export interface OrderRecord { id: number; orderNo: string; customerName: string; status: OrderStatus; items: OrderItem[]; createdAt: string; exceptionReason?: string }
+export interface OrderRecord { id: number; orderNo: string; customerName: string; status: OrderStatus; items: OrderItem[]; createdAt: string; deliveryDate: string | null; exceptionReason?: string }
 
 type OrderState = {
   orders: OrderRecord[]
@@ -17,6 +17,7 @@ type OrderState = {
   createOrder: (payload: unknown) => Promise<OrderRecord>
   checkInventory: (id: number, recheck?: boolean) => Promise<void>
   cancelOrder: (id: number) => Promise<void>
+  changeDeliveryDate: (id: number, date: string) => Promise<void>
   selectOrder: (id: number | null) => void
 }
 
@@ -38,6 +39,10 @@ export const useOrderStore = create<OrderState>((set) => ({
   },
   cancelOrder: async (id) => {
     const order = await orderApi.cancel(id)
+    set((state) => ({ orders: state.orders.map((item) => item.id === id ? order : item) }))
+  },
+  changeDeliveryDate: async (id, date) => {
+    const order = await orderApi.changeDeliveryDate(id, date)
     set((state) => ({ orders: state.orders.map((item) => item.id === id ? order : item) }))
   },
   selectOrder: (selectedOrderId) => set({ selectedOrderId }),
