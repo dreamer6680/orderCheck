@@ -1,4 +1,3 @@
-import { withNextLocator } from "@next-locator/babel-plugin/dist/config.mjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -10,4 +9,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextLocator(nextConfig);
+export default nextConfig;
