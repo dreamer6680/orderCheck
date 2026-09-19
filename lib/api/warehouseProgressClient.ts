@@ -13,6 +13,10 @@ export interface WarehouseProgress {
   differenceRecordCount: number
   completedOutboundCount: number
   differencePercent: number
+  totalOrderCount: number
+  pendingOutboundOrderCount: number
+  abnormalOrderCount: number
+  abnormalOrderPercent: number
   updatedAt: string
 }
 
@@ -26,6 +30,10 @@ const requiredMetricFields = [
   'differenceRecordCount',
   'completedOutboundCount',
   'differencePercent',
+  'totalOrderCount',
+  'pendingOutboundOrderCount',
+  'abnormalOrderCount',
+  'abnormalOrderPercent',
 ] as const satisfies readonly (keyof WarehouseProgress)[]
 
 export const warehouseProgressApi = {
