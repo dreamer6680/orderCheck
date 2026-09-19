@@ -31,14 +31,24 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const data = await api.login({ username, password })
-      set({
-        user: data.user,
-        token: data.token,
-        isLoading: false,
-      })
+      const account = data.user
+      if (!data.token || !account ||
+          typeof account.id !== 'number' ||
+          typeof account.username !== 'string' ||
+          typeof account.displayName !== 'string' ||
+          !['SALES', 'WAREHOUSE', 'MANAGER'].includes(String(account.role))) {
+        throw new Error('登录服务返回的用户信息无效')
+      }
+      const user: User = {
+        id: account.id,
+        username: account.username,
+        displayName: account.displayName,
+        role: account.role!,
+      }
 
       localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      localStorage.setItem('user', JSON.stringify(user))
+      set({ user, token: data.token, isLoading: false })
     } catch (error) {
       const message = error instanceof Error ? error.message : '登录失败'
       set({ error: message, isLoading: false })
