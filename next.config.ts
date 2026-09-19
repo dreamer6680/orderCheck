@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  reactStrictMode:false,
   turbopack: {
     rules: {
       "**/*.{tsx,jsx}": {
