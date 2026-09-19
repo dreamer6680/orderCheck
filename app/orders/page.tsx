@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { useOrderStore, type OrderStatus } from '@/lib/order-store'
+import { useOrderStore, type OrderStatus } from '@/lib/store/orderStore'
 import { api } from '@/lib/api/client'
 import type { ProductResponse } from '@/lib/api/generated'
 
