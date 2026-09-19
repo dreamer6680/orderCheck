@@ -15,7 +15,7 @@ export type Permission =
 
 const permissions: Record<Role, readonly Permission[]> = {
   SALES: ['dashboard:view', 'orders:read', 'orders:write', 'inventory:read', 'products:read'],
-  WAREHOUSE: ['dashboard:view', 'inventory:read', 'inventory:write', 'products:read', 'products:write', 'outbound:read', 'outbound:write'],
+  WAREHOUSE: ['dashboard:view', 'inventory:read', 'inventory:write', 'products:read', 'outbound:read', 'outbound:write'],
   MANAGER: ['dashboard:view', 'orders:read', 'orders:write', 'inventory:read', 'inventory:write', 'products:read', 'products:write', 'outbound:read', 'outbound:write', 'admin:manage'],
 }
 
