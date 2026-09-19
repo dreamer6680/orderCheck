@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useNotificationStore } from '@/lib/store'
+import { useNotificationStore } from '@/lib/store/notificationStore'
 
 type AdminUser = { id:number; username:string; displayName:string; email:string; role:string; status:string; lastLogin:string }
 const roleNames: Record<string,string> = { MANAGER:'负责人', SALES:'业务员', WAREHOUSE:'仓库人员' }
