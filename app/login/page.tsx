@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { api } from '@/lib/api/client'
+import { useUserStore } from '@/lib/store/userStore'
 
 const DEMO_ACCOUNTS = [
   { username: 'sales01', password: 'demo123', name: '业务员', role: 'SALES' },
@@ -18,6 +18,7 @@ const DEMO_ACCOUNTS = [
 
 export default function LoginPage() {
   const router = useRouter()
+  const login = useUserStore((state) => state.login)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -29,13 +30,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const data = await api.login({ username, password })
-
-      if (!data?.user || !data?.token) {
-        throw new Error('登录服务返回了无效数据')
-      }
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      await login(username, password)
       router.push('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败')
