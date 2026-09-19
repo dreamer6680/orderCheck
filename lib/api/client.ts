@@ -1,5 +1,6 @@
 import { can, type Permission } from '../permissions'
 import { useUserStore } from '../store/userStore'
+import { apiFetch } from '../api-client'
 import * as generated from "./generated";
 import type {
   AbnormalParams,
@@ -83,7 +84,10 @@ export const api = {
   recheckOrder: (id: number) => authorized('orders:write', () => unwrap(generated.recheck(id, mergeOptions()))),
   cancelOrder: (id: number) => authorized('orders:write', () => unwrap(generated.cancel(id, mergeOptions()))),
   abnormalOrders: (params?: AbnormalParams) => authorized('orders:read', () => unwrap(generated.abnormal(params, mergeOptions()))),
-  listInventory: () => authorized('inventory:read', () => unwrap(generated.listInventory(mergeOptions()))),
+  listInventory: () => authorized('inventory:read', () =>
+    useUserStore.getState().user?.role === 'SALES'
+      ? apiFetch<generated.InventoryProjection[]>('/api/inventory/quantities')
+      : unwrap(generated.listInventory(mergeOptions()))),
   inventoryForProduct: (productId: number) =>
     authorized('inventory:read', () => unwrap(generated.inventoryForProduct(productId, mergeOptions()))),
   listInboundRecords: (params?: ListInboundRecordsParams) =>
