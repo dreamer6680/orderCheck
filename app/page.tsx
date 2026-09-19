@@ -267,8 +267,8 @@ export default function Page() {
               tone="violet"
             />
           </section>
-          {canReadOrders && <div className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-            <Card className="border-slate-200 shadow-none">
+          <div className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+            {canReadOrders && <Card className="border-slate-200 shadow-none">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
                   <CardTitle className="text-base">近期客户订单</CardTitle>
@@ -328,7 +328,7 @@ export default function Page() {
                   </TableBody>
                 </Table>
               </CardContent>
-            </Card>
+            </Card>}
             <Card className="border-slate-200 shadow-none">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <div>
