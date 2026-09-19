@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { LayoutDashboard, ClipboardList, AlertTriangle, Boxes, Truck, Settings, Users, PackageCheck, LogOut, PanelLeftClose, PanelLeftOpen, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { useAuthStore } from '@/lib/store/authStore'
+import { useUserStore } from '@/lib/store/userStore'
 
 const navItems = [
   { label: '工作台', href: '/', icon: LayoutDashboard, roles: ['SALES', 'WAREHOUSE', 'MANAGER'] },
@@ -23,10 +23,10 @@ const systemItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { user, logout } = useAuthStore()
+  const { user, logout } = useUserStore()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
-  const currentRole = user?.role || 'MANAGER'
+  const currentRole = user?.role
   const visibleNavItems = navItems.filter((item) => item.roles.includes(currentRole))
   const visibleSystemItems = systemItems.filter((item) => item.roles.includes(currentRole))
 
