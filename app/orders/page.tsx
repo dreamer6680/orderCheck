@@ -17,12 +17,14 @@ const statusLabels: Record<OrderStatus, string> = {
   PENDING_OUTBOUND: "待出库",
   ABNORMAL: "异常",
   COMPLETED: "已完成",
+  CANCELLED: "已取消",
 };
 const statusStyles: Record<OrderStatus, string> = {
   PENDING_CHECK: "border-amber-200 bg-amber-50 text-amber-700",
   PENDING_OUTBOUND: "border-blue-200 bg-blue-50 text-blue-700",
   ABNORMAL: "border-red-200 bg-red-50 text-red-700",
   COMPLETED: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  CANCELLED: "border-slate-200 bg-slate-50 text-slate-700",
 };
 
 function StatusBadge({ status }: { status: OrderStatus }) {
@@ -45,12 +47,17 @@ export default function OrdersPage() {
     selectOrder,
     checkInventory,
     cancelOrder,
+    changeDeliveryDate,
   } = useOrderStore();
   const [keyword, setKeyword] = useState("");
   const [status, setStatus] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [customerName, setCustomerName] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [deliveryEdits, setDeliveryEdits] = useState<Record<number, string>>({});
+  const [savingDeliveryDate, setSavingDeliveryDate] = useState(false);
+  const [deliveryDateError, setDeliveryDateError] = useState("");
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [creating, setCreating] = useState(false);
@@ -89,7 +96,7 @@ export default function OrdersPage() {
   const submitCreateOrder = async () => {
     const selectedProductId = Number(productId);
     const orderedQuantity = Number(quantity);
-    if (!customerName.trim() || !selectedProductId || orderedQuantity < 1)
+    if (!customerName.trim() || !deliveryDate || !selectedProductId || orderedQuantity < 1)
       return;
 
     setCreating(true);
@@ -97,10 +104,12 @@ export default function OrdersPage() {
     try {
       await createOrder({
         customerName: customerName.trim(),
+        deliveryDate,
         items: [{ productId: selectedProductId, orderedQuantity }],
       });
       setCreateOpen(false);
       setCustomerName("");
+      setDeliveryDate("");
       setProductId("");
       setQuantity("1");
       await loadOrders({
@@ -233,6 +242,7 @@ export default function OrdersPage() {
                       <TableHead>客户名称</TableHead>
                       <TableHead>商品信息</TableHead>
                       <TableHead>状态</TableHead>
+                      <TableHead>交付日期</TableHead>
                       <TableHead>创建时间</TableHead>
                       <TableHead className="text-right">操作</TableHead>
                     </TableRow>
@@ -256,6 +266,7 @@ export default function OrdersPage() {
                         <TableCell>
                           <StatusBadge status={order.status} />
                         </TableCell>
+                        <TableCell className="text-xs text-slate-600">{order.deliveryDate ?? "未设置"}</TableCell>
                         <TableCell className="text-xs text-slate-400">
                           {order.createdAt}
                         </TableCell>
@@ -296,6 +307,11 @@ export default function OrdersPage() {
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="请输入客户名称"
                 />
+              </div>
+              <div>
+                <label htmlFor="new-order-delivery-date" className="mb-1.5 block text-sm font-medium">交付日期（必填）</label>
+                <Input id="new-order-delivery-date" type="date" required value={deliveryDate} onChange={(event) => setDeliveryDate(event.target.value)} />
+                <p className="mt-1 text-xs text-slate-500">交付日期用于统计当天需交付订单，允许提前出库。</p>
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">商品</label>
@@ -343,6 +359,7 @@ export default function OrdersPage() {
                 disabled={
                   creating ||
                   !customerName.trim() ||
+                  !deliveryDate ||
                   !productId ||
                   Number(quantity) < 1
                 }
@@ -379,6 +396,45 @@ export default function OrdersPage() {
                     </div>
                   ))}
                   <StatusBadge status={selectedOrder.status} />
+                  <div className="rounded-lg border border-slate-200 p-3">
+                    <label htmlFor={`order-delivery-${selectedOrder.id}`} className="mb-2 block text-sm font-medium">客户交付日期</label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Input
+                        id={`order-delivery-${selectedOrder.id}`}
+                        type="date"
+                        className="w-44"
+                        value={deliveryEdits[selectedOrder.id] ?? selectedOrder.deliveryDate ?? ''}
+                        onChange={(event) => setDeliveryEdits((previous) => ({ ...previous, [selectedOrder.id]: event.target.value }))}
+                        disabled={savingDeliveryDate || selectedOrder.status === 'COMPLETED' || selectedOrder.status === 'CANCELLED'}
+                      />
+                      {selectedOrder.status !== 'COMPLETED' && selectedOrder.status !== 'CANCELLED' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={savingDeliveryDate || !(deliveryEdits[selectedOrder.id] ?? selectedOrder.deliveryDate) ||
+                            (deliveryEdits[selectedOrder.id] ?? selectedOrder.deliveryDate) === selectedOrder.deliveryDate}
+                          onClick={async () => {
+                            setSavingDeliveryDate(true)
+                            setDeliveryDateError('')
+                            try {
+                              await changeDeliveryDate(selectedOrder.id, deliveryEdits[selectedOrder.id])
+                              setDeliveryEdits((previous) => {
+                                const next = { ...previous }
+                                delete next[selectedOrder.id]
+                                return next
+                              })
+                            } catch (err) {
+                              setDeliveryDateError(err instanceof Error ? err.message : '交付日期保存失败')
+                            } finally {
+                              setSavingDeliveryDate(false)
+                            }
+                          }}
+                        >{savingDeliveryDate ? '保存中...' : '保存交付日期'}</Button>
+                      )}
+                    </div>
+                    {deliveryDateError && <p role="alert" className="mt-2 text-xs text-red-600">{deliveryDateError}</p>}
+                    <p className="mt-2 text-xs text-slate-500">旧订单可在此补录真实交付日期；修改交付日期不会自动更改出库计划。</p>
+                  </div>
                   {selectedOrder.exceptionReason && (
                     <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
                       {selectedOrder.exceptionReason}
