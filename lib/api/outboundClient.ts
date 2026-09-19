@@ -13,6 +13,7 @@ export interface OutboundRecord {
   productName: string
   unit: string
   plannedQuantity: number
+  plannedOutboundDate: string
   actualQuantity: number | null
   status: OutboundStatus
   differenceReason: string | null
@@ -31,6 +32,12 @@ export const outboundApi = {
 
   checkInventory: (id: number) =>
     apiFetch<OutboundCheck>(`/api/outbound-records/${id}/check-inventory`),
+
+  reschedule: (id: number, plannedOutboundDate: string) =>
+    apiFetch<OutboundRecord>(`/api/outbound-records/${id}/schedule`, {
+      method: 'PATCH',
+      body: JSON.stringify({ plannedOutboundDate }),
+    }),
 
   complete: (id: number, actualQuantity: number, differenceReason?: string) =>
     apiFetch<OutboundRecord>(`/api/outbound-records/${id}/complete`, {

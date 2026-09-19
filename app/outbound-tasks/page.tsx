@@ -23,6 +23,8 @@ export default function OutboundTasksPage() {
   const [selected, setSelected] = useState<OutboundRecord | null>(null)
   const [actualQuantity, setActualQuantity] = useState('')
   const [differenceReason, setDifferenceReason] = useState('')
+  const [scheduleDates, setScheduleDates] = useState<Record<number, string>>({})
+  const [schedulingId, setSchedulingId] = useState<number | null>(null)
 
   const loadTasks = useCallback(async () => {
     if (!canRead) return
@@ -58,6 +60,21 @@ export default function OutboundTasksPage() {
     setActualQuantity(String(task.plannedQuantity))
     setDifferenceReason('')
     setError('')
+  }
+
+  const saveSchedule = async (task: OutboundRecord) => {
+    const date = scheduleDates[task.id] ?? task.plannedOutboundDate
+    if (!canWrite || task.status !== 'PENDING' || !date || date === task.plannedOutboundDate) return
+    setSchedulingId(task.id)
+    try {
+      const updated = await outboundApi.reschedule(task.id, date)
+      setTasks((current) => current.map((item) => item.id === updated.id ? updated : item))
+      setError('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '计划出库日期保存失败')
+    } finally {
+      setSchedulingId(null)
+    }
   }
 
   const quantity = Number(actualQuantity)
@@ -126,11 +143,29 @@ export default function OutboundTasksPage() {
                   <div className="flex items-center gap-2"><Truck className="size-4 text-slate-400" />{task.productName} · {task.sku}</div>
                   <div className="flex flex-wrap gap-6 text-slate-600">
                     <span>计划数量：{task.plannedQuantity} {task.unit}</span>
+                    <span>计划出库日期：{task.plannedOutboundDate}</span>
                     <span>实际数量：{task.actualQuantity ?? '—'} {task.unit}</span>
                   </div>
                   {task.differenceReason && <p className="text-amber-700">差异说明：{task.differenceReason}</p>}
-                  {canWrite && task.status === 'PENDING' &&
-                    <Button onClick={() => openComplete(task)}><Check className="size-4" />确认出库</Button>}
+                  {canWrite && task.status === 'PENDING' && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label htmlFor={`planned-date-${task.id}`} className="text-xs text-slate-500">调整计划出库日期</label>
+                      <Input
+                        id={`planned-date-${task.id}`}
+                        type="date"
+                        className="w-44"
+                        value={scheduleDates[task.id] ?? task.plannedOutboundDate}
+                        onChange={(event) => setScheduleDates((current) => ({ ...current, [task.id]: event.target.value }))}
+                        disabled={schedulingId !== null}
+                      />
+                      <Button
+                        variant="outline"
+                        disabled={schedulingId !== null || !scheduleDates[task.id] || scheduleDates[task.id] === task.plannedOutboundDate}
+                        onClick={() => void saveSchedule(task)}
+                      >保存日期</Button>
+                      <Button onClick={() => openComplete(task)} disabled={schedulingId !== null}><Check className="size-4" />确认出库</Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
