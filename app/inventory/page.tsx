@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field'
 import { api } from '@/lib/api/client'
 import { useUserStore } from '@/lib/store/userStore'
@@ -137,12 +137,10 @@ export default function InventoryPage() {
             <p className="mt-2 text-sm text-slate-500">查看实时库存数量</p>
           </div>
           {canWriteInventory && <Dialog open={isInboundOpen} onOpenChange={setIsInboundOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-slate-900 hover:bg-slate-800">
-                <Plus size={16} data-icon="inline-start" />
-                登记入库
-              </Button>
-            </DialogTrigger>
+            <Button className="bg-slate-900 hover:bg-slate-800" onClick={() => setIsInboundOpen(true)}>
+              <Plus size={16} data-icon="inline-start" />
+              登记入库
+            </Button>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>登记入库</DialogTitle>
