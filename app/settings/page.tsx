@@ -43,12 +43,12 @@ export default function SettingsPage() {
   };
   if (loading)
     return (
-      <main className="min-h-screen bg-[#f7f8fa] px-4 pb-24 pt-6 lg:ml-[238px]">
+      <main className="min-h-screen bg-[#f7f8fa] px-4 pb-24 pt-6">
         <p className="text-sm text-slate-400">正在加载系统设置...</p>
       </main>
     );
   return (
-    <main className="min-h-screen bg-[#f7f8fa] px-4 pb-24 pt-6 sm:px-8 lg:ml-[238px] lg:px-10 lg:pb-10 lg:pt-9">
+    <main className="min-h-screen bg-[#f7f8fa] px-4 pb-24 pt-6 sm:px-8 lg:px-10 lg:pb-10 lg:pt-9">
       <div className="mx-auto max-w-4xl">
         <div className="mb-7">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
