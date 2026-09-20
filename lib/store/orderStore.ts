@@ -4,8 +4,8 @@ import { create } from 'zustand'
 import { orderApi } from '../api-client'
 
 export type OrderStatus = 'PENDING_CHECK' | 'PENDING_OUTBOUND' | 'ABNORMAL' | 'COMPLETED' | 'CANCELLED'
-export interface OrderItem { sku: string; productName: string; orderedQuantity: number }
-export interface OrderRecord { id: number; orderNo: string; customerName: string; status: OrderStatus; items: OrderItem[]; createdAt: string; deliveryDate: string | null; exceptionReason?: string; abnormalType?: 'STOCK_SHORTAGE' | 'SHORT_DELIVERY' | 'UNABLE_TO_DELIVER' | 'OUTBOUND_CANCELLED' | 'OTHER' | null }
+export interface OrderItem { id: number; sku: string; productName: string; unit: string; orderedQuantity: number; shippedQuantity: number; pendingQuantity: number; waivedQuantity: number; remainingQuantity: number }
+export interface OrderRecord { id: number; orderNo: string; customerName: string; status: OrderStatus; items: OrderItem[]; createdAt: string; deliveryDate: string | null; exceptionReason?: string; abnormalType?: 'STOCK_SHORTAGE' | 'SHORT_DELIVERY' | 'UNABLE_TO_DELIVER' | 'OUTBOUND_CANCELLED' | 'OTHER' | null; events?: { id: number; eventType: string; description: string; operatorUsername: string | null; createdAt: string }[] }
 
 type OrderState = {
   orders: OrderRecord[]
