@@ -57,4 +57,5 @@ export const orderApi = {
   recheckInventory: (id: number) => apiFetch<import('./store/orderStore').OrderRecord>(`/api/orders/${id}/recheck-inventory`, { method: 'POST' }),
   cancel: (id: number) => apiFetch<import('./store/orderStore').OrderRecord>(`/api/orders/${id}/cancel`, { method: 'POST' }),
   changeDeliveryDate: (id: number, deliveryDate: string) => apiFetch<import('./store/orderStore').OrderRecord>(`/api/orders/${id}/delivery-date`, { method: 'PATCH', body: JSON.stringify({ deliveryDate }) }),
+  markUnableToDeliver: (id: number, reason: string) => apiFetch<import('./store/orderStore').OrderRecord>(`/api/orders/${id}/unable-to-deliver`, { method: 'POST', body: JSON.stringify({ reason }) }),
 }
