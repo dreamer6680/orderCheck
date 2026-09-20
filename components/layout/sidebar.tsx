@@ -10,7 +10,6 @@ import { useUserStore } from '@/lib/store/userStore'
 import { can, type Permission } from '@/lib/permissions'
 
 const navItems: { label: string; href: string; icon: typeof LayoutDashboard; permission: Permission }[] = [
-  { label: '工作台', href: '/', icon: LayoutDashboard, permission: 'dashboard:view' },
   { label: '客户订单', href: '/orders', icon: ClipboardList, permission: 'orders:read' },
   { label: '异常订单', href: '/abnormal-orders', icon: AlertTriangle, permission: 'orders:read' },
   { label: '库存一览', href: '/inventory', icon: Boxes, permission: 'inventory:read' },
