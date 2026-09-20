@@ -193,7 +193,7 @@ export default function AbnormalOrdersPage() {
                         const available = stockOf(item)
                         const unplanned = Math.max(0, item.remainingQuantity - item.pendingQuantity)
                         const canSupplement = (kind === 'SHORT_DELIVERY' || kind === 'OUTBOUND_CANCELLED')
-                          && item.id && item.shippedQuantity > 0 && unplanned > 0 && available !== null
+                          && item.id && unplanned > 0 && available !== null
                           && available > 0
                         return (
                           <div key={item.id ?? index} className="rounded-md border bg-slate-50 p-3 text-sm">
