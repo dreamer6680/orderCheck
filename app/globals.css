@@ -168,6 +168,13 @@
 .app-content {
   min-width: 0;
   padding-bottom: 68px;
+  /* Match page backgrounds in the space reserved for the fixed mobile navigation. */
+  background-color: #f7f8fa;
+}
+
+body:has(.login-page) .app-content {
+  padding-bottom: 0;
+  background-color: transparent;
 }
 
 @media (min-width: 1024px) {
