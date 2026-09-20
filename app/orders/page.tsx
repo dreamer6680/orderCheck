@@ -48,6 +48,7 @@ export default function OrdersPage() {
     checkInventory,
     cancelOrder,
     changeDeliveryDate,
+    markUnableToDeliver,
   } = useOrderStore();
   const [keyword, setKeyword] = useState("");
   const [status, setStatus] = useState("");
@@ -58,6 +59,10 @@ export default function OrdersPage() {
   const [deliveryEdits, setDeliveryEdits] = useState<Record<number, string>>({});
   const [savingDeliveryDate, setSavingDeliveryDate] = useState(false);
   const [deliveryDateError, setDeliveryDateError] = useState("");
+  const [unableToDeliverReason, setUnableToDeliverReason] = useState("");
+  const [unableToDeliverOpen, setUnableToDeliverOpen] = useState(false);
+  const [unableToDeliverLoading, setUnableToDeliverLoading] = useState(false);
+  const [unableToDeliverError, setUnableToDeliverError] = useState("");
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [creating, setCreating] = useState(false);
@@ -396,6 +401,7 @@ export default function OrdersPage() {
                     </div>
                   ))}
                   <StatusBadge status={selectedOrder.status} />
+                  {selectedOrder.status === "ABNORMAL" && <p className="text-xs text-red-700">异常类型：{{ STOCK_SHORTAGE: "库存不足待核查", SHORT_DELIVERY: "缺货交付", UNABLE_TO_DELIVER: "确认无法交付", OUTBOUND_CANCELLED: "出库任务取消", OTHER: "其他历史异常" }[selectedOrder.abnormalType ?? "OTHER"]}</p>}
                   <div className="rounded-lg border border-slate-200 p-3">
                     <label htmlFor={`order-delivery-${selectedOrder.id}`} className="mb-2 block text-sm font-medium">客户交付日期</label>
                     <div className="flex flex-wrap items-center gap-2">
@@ -435,6 +441,31 @@ export default function OrdersPage() {
                     {deliveryDateError && <p role="alert" className="mt-2 text-xs text-red-600">{deliveryDateError}</p>}
                     <p className="mt-2 text-xs text-slate-500">旧订单可在此补录真实交付日期；修改交付日期不会自动更改出库计划。</p>
                   </div>
+                  {(selectedOrder.status === "PENDING_CHECK" || selectedOrder.status === "PENDING_OUTBOUND" ||
+                    (selectedOrder.status === "ABNORMAL" && selectedOrder.abnormalType === "STOCK_SHORTAGE")) && (
+                    <div className="rounded-lg border p-3 text-sm">
+                      <Button variant="outline" onClick={() => { setUnableToDeliverOpen(!unableToDeliverOpen); setUnableToDeliverError(""); }}>确认无法交付</Button>
+                      {unableToDeliverOpen && <div className="mt-3 space-y-2">
+                        <label className="block text-sm" htmlFor="unable-to-deliver-reason">无法交付原因（必填）</label>
+                        <Input id="unable-to-deliver-reason" maxLength={500} value={unableToDeliverReason}
+                          onChange={(event) => setUnableToDeliverReason(event.target.value)} placeholder="请输入经确认的原因" />
+                        <Button disabled={unableToDeliverLoading || !unableToDeliverReason.trim()} onClick={async () => {
+                          setUnableToDeliverLoading(true)
+                          setUnableToDeliverError("")
+                          try {
+                            await markUnableToDeliver(selectedOrder.id, unableToDeliverReason.trim())
+                            setUnableToDeliverOpen(false)
+                            setUnableToDeliverReason("")
+                          } catch (err) {
+                            setUnableToDeliverError(err instanceof Error ? err.message : "确认失败")
+                          } finally {
+                            setUnableToDeliverLoading(false)
+                          }
+                        }}>{unableToDeliverLoading ? "处理中..." : "提交确认"}</Button>
+                        {unableToDeliverError && <p role="alert" className="text-red-600">{unableToDeliverError}</p>}
+                      </div>}
+                    </div>
+                  )}
                   {selectedOrder.exceptionReason && (
                     <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
                       {selectedOrder.exceptionReason}
@@ -452,7 +483,7 @@ export default function OrdersPage() {
                       核查库存
                     </Button>
                   )}
-                  {selectedOrder.status === "ABNORMAL" && (
+                  {selectedOrder.status === "ABNORMAL" && selectedOrder.abnormalType === "STOCK_SHORTAGE" && (
                     <Button
                       onClick={async () => {
                         await checkInventory(selectedOrder.id, true);
