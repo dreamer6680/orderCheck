@@ -15,6 +15,7 @@ export interface OutboundRecord {
   plannedQuantity: number
   plannedOutboundDate: string
   deliveryDate: string | null
+  shipmentType: 'INITIAL' | 'SUPPLEMENTAL'
   actualQuantity: number | null
   status: OutboundStatus
   differenceReason: string | null
