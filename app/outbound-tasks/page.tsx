@@ -176,7 +176,7 @@ export default function OutboundTasksPage() {
                 <CardHeader className="flex flex-row items-start justify-between gap-4">
                   <div>
                     <CardTitle className="text-base">{task.orderNo}</CardTitle>
-                    <CardDescription>{task.customerName} · {task.recordNo}</CardDescription>
+                    <CardDescription>{task.customerName} · {task.recordNo} · {task.shipmentType === "SUPPLEMENTAL" ? "补发任务" : "首次出库"}</CardDescription>
                   </div>
                   <Badge variant="outline">{task.status === 'PENDING' ? '待出库' : task.status === 'COMPLETED' ? '已完成' : '已取消'}</Badge>
                 </CardHeader>
