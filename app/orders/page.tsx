@@ -396,7 +396,12 @@ export default function OrdersPage() {
                     >
                       <div className="font-medium">{item.productName}</div>
                       <div className="text-xs text-muted-foreground">
-                        SKU: {item.sku}，数量：{item.orderedQuantity}
+                        SKU: {item.sku}，订购：{item.orderedQuantity} {item.unit}
+                      </div>
+                      {typeof item.shippedQuantity === "number" && typeof item.remainingQuantity === "number" && (
+                        <p className="mt-1 text-xs text-slate-600">累计已出库：{item.shippedQuantity} · 待履约：{item.remainingQuantity} · 待执行任务：{item.pendingQuantity} · 客户接受不再补发：{item.waivedQuantity}</p>
+                      )}
+                      <div className="hidden" aria-hidden="true">
                       </div>
                     </div>
                   ))}
@@ -466,6 +471,14 @@ export default function OrdersPage() {
                       </div>}
                     </div>
                   )}
+                  {selectedOrder.events && selectedOrder.events.length > 0 && (
+                    <div className="rounded-lg border p-3 text-xs">
+                      <p className="font-medium">履约历史</p>
+                      <ul className="mt-2 space-y-2">{selectedOrder.events.map(event => (
+                        <li key={event.id}><span className="font-medium">{event.eventType}</span> · {event.createdAt ? new Date(event.createdAt).toLocaleString("zh-CN") : "—"}<p className="mt-1 whitespace-pre-wrap">{event.description}</p></li>
+                      ))}</ul>
+                    </div>
+                  )}
                   {selectedOrder.exceptionReason && (
                     <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
                       {selectedOrder.exceptionReason}
@@ -493,7 +506,7 @@ export default function OrdersPage() {
                       重新核查
                     </Button>
                   )}
-                  {selectedOrder.status !== "COMPLETED" && (
+                  {selectedOrder.status !== "COMPLETED" && selectedOrder.status !== "CANCELLED" && (
                     <Button
                       variant="outline"
                       onClick={async () => {
