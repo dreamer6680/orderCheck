@@ -401,9 +401,7 @@ export default function OrdersPage() {
                       {typeof item.shippedQuantity === "number" && typeof item.remainingQuantity === "number" && (
                         <p className="mt-1 text-xs text-slate-600">累计已出库：{item.shippedQuantity} · 待履约：{item.remainingQuantity} · 待执行任务：{item.pendingQuantity} · 客户接受不再补发：{item.waivedQuantity}</p>
                       )}
-                      <div className="hidden" aria-hidden="true">
-                      </div>
-                    </div>
+                                          </div>
                   ))}
                   <StatusBadge status={selectedOrder.status} />
                   {selectedOrder.status === "ABNORMAL" && <p className="text-xs text-red-700">异常类型：{{ STOCK_SHORTAGE: "库存不足待核查", SHORT_DELIVERY: "缺货交付", UNABLE_TO_DELIVER: "确认无法交付", OUTBOUND_CANCELLED: "出库任务取消", OTHER: "其他历史异常" }[selectedOrder.abnormalType ?? "OTHER"]}</p>}
