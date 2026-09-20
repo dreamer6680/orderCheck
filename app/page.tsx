@@ -220,7 +220,6 @@ export default function Page() {
       <main>
         <header className="flex h-[76px] items-center justify-between border-b border-slate-200 bg-white px-6 lg:px-9">
           <div>
-            <p className="text-xs text-slate-400">周四，2026年9月18日</p>
             <h1 className="mt-1 text-xl font-semibold tracking-tight">
               工作台
             </h1>
@@ -235,10 +234,6 @@ export default function Page() {
                 className="h-9 w-64 border-slate-200 bg-slate-50 pl-9 text-xs"
               />
             </div>
-            <button className="relative flex size-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50">
-              <Bell />
-              <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-red-500" />
-            </button>
           </div>
         </header>
         <div className="mx-auto max-w-[1440px] p-6 lg:p-9">

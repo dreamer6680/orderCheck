@@ -11,9 +11,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useUserStore } from '@/lib/store/userStore'
 
 const DEMO_ACCOUNTS = [
-  { username: 'sales01', password: 'demo123', name: '业务员', role: 'SALES' },
-  { username: 'warehouse01', password: 'demo123', name: '仓库人员', role: 'WAREHOUSE' },
-  { username: 'manager01', password: 'demo123', name: '负责人', role: 'MANAGER' },
+  { username: 'sales', password: 'sales123', name: '业务员', role: 'SALES' },
+  { username: 'warehouse', password: 'warehouse123', name: '仓库人员', role: 'WAREHOUSE' },
+  { username: 'admin', password: '123456', name: '负责人', role: 'MANAGER' },
 ]
 
 export default function LoginPage() {
