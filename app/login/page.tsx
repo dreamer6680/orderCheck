@@ -8,15 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { FieldGroup, Field, FieldLabel, FieldDescription } from '@/components/ui/field'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useUserStore } from '@/lib/store/userStore'
 
 const DEMO_ACCOUNTS = [
-  { username: 'sales01', password: 'demo123', name: '业务员', role: 'SALES' },
-  { username: 'warehouse01', password: 'demo123', name: '仓库人员', role: 'WAREHOUSE' },
-  { username: 'manager01', password: 'demo123', name: '负责人', role: 'MANAGER' },
+  { username: 'sales', password: 'sales123', name: '业务员', role: 'SALES' },
+  { username: 'warehouse', password: 'warehouse123', name: '仓库人员', role: 'WAREHOUSE' },
+  { username: 'admin', password: '123456', name: '负责人', role: 'MANAGER' },
 ]
 
 export default function LoginPage() {
   const router = useRouter()
+  const login = useUserStore((state) => state.login)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -28,23 +30,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
-
-      const data = await response.json().catch(() => null)
-
-      if (!response.ok) {
-        throw new Error(data?.message || '登录失败，请检查用户名和密码')
-      }
-
-      if (!data?.user || !data?.token) {
-        throw new Error('登录服务返回了无效数据')
-      }
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      await login(username, password)
       router.push('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败')
@@ -59,7 +45,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+    <div className="login-page min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-3">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg">

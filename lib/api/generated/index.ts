@@ -4,13 +4,6 @@
  * OpenAPI definition
  * OpenAPI spec version: v0
  */
-import axios from 'axios';
-import type {
-  AxiosInstance,
-  AxiosRequestConfig,
-  AxiosResponse
-} from 'axios';
-
 export interface ProductRequest {
   /**
      * @minLength 0
@@ -53,6 +46,8 @@ export interface CreateOrderRequest {
      * @maxLength 150
      */
   customerName: string;
+  /** Customer's promised delivery date, YYYY-MM-DD. */
+  deliveryDate: string;
   /** @minItems 1 */
   items: ItemRequest[];
 }
@@ -81,6 +76,7 @@ export interface OrderResponse {
   id?: number;
   orderNo?: string;
   customerName?: string;
+  deliveryDate?: string | null;
   status?: OrderResponseStatus;
   exceptionReason?: string;
   createdBy?: string;
@@ -175,398 +171,121 @@ page?: number;
 size?: number;
 };
 
-export const getOpenAPIDefinition = (axiosInstance: AxiosInstance = axios) => {
-const getProduct = (
-    id: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ProductResponse>> => {
-    return axiosInstance.get(
-      `/api/products/${id}`,options
-    );
-  }
-const getGetProductUrl = (id: number,) => {
 
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/products/${id}`,
-    baseURL: '',
+export type ApiResponse<T> = {
+  data: T;
+  status: number;
+};
 
-
+const queryString = (params?: object) => {
+  const search = new URLSearchParams();
+  Object.entries(params ?? {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      search.set(key, String(value));
+    }
   });
-}
+  return search.size ? `?${search.toString()}` : "";
+};
 
-const updateProduct = (
-    id: number,
-    productRequest: ProductRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ProductResponse>> => {
-    return axiosInstance.put(
-      `/api/products/${id}`,
-      productRequest,options
-    );
+const parseResponse = async <T>(response: Response): Promise<ApiResponse<T>> => {
+  if ([204, 205, 304].includes(response.status)) {
+    return { status: response.status, data: undefined as T };
   }
-const getUpdateProductUrl = (id: number,) => {
 
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/products/${id}`,
-    baseURL: '',
-
-
-  });
-}
-
-const deleteProduct = (
-    id: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    return axiosInstance.delete(
-      `/api/products/${id}`,options
-    );
+  const text = await response.text();
+  if (!text) {
+    return { status: response.status, data: undefined as T };
   }
-const getDeleteProductUrl = (id: number,) => {
 
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/products/${id}`,
-    baseURL: '',
+  const contentType = response.headers.get("content-type") ?? "";
+  const data = contentType.includes("application/json")
+    ? (JSON.parse(text) as T)
+    : (text as T);
 
+  return { status: response.status, data };
+};
 
-  });
-}
+const jsonHeaders = (options?: RequestInit) => {
+  const headers = new Headers(options?.headers);
+  headers.set("Content-Type", "application/json");
+  return headers;
+};
 
-const listProducts = (
-     options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ProductResponse[]>> => {
-    return axiosInstance.get(
-      `/api/products`,options
-    );
-  }
-const getListProductsUrl = () => {
+export const getProduct = async (id: number, options?: RequestInit) =>
+  parseResponse<ProductResponse>(await fetch(`/backend/api/products/${id}`, { ...options, method: "GET" }));
 
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/products`,
-    baseURL: '',
-
-
-  });
-}
-
-const createProduct = (
-    productRequest: ProductRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<ProductResponse>> => {
-    return axiosInstance.post(
-      `/api/products`,
-      productRequest,options
-    );
-  }
-const getCreateProductUrl = () => {
-
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/products`,
-    baseURL: '',
-
-
-  });
-}
-
-const list = (
-    params?: ListParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<OrderResponse[]>> => {
-    return axiosInstance.get(
-      `/api/orders`,{
+export const updateProduct = async (id: number, productRequest: ProductRequest, options?: RequestInit) =>
+  parseResponse<ProductResponse>(await fetch(`/backend/api/products/${id}`, {
     ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-const getListUrl = (params?: ListParams,) => {
+    method: "PUT",
+    headers: jsonHeaders(options),
+    body: JSON.stringify(productRequest),
+  }));
 
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/orders`,
-    baseURL: '',
-    params,
+export const deleteProduct = async (id: number, options?: RequestInit) =>
+  parseResponse<void>(await fetch(`/backend/api/products/${id}`, { ...options, method: "DELETE" }));
 
-  });
-}
+export const listProducts = async (options?: RequestInit) =>
+  parseResponse<ProductResponse[]>(await fetch("/backend/api/products", { ...options, method: "GET" }));
 
-const create = (
-    createOrderRequest: CreateOrderRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<OrderResponse>> => {
-    return axiosInstance.post(
-      `/api/orders`,
-      createOrderRequest,options
-    );
-  }
-const getCreateUrl = () => {
-
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/orders`,
-    baseURL: '',
-
-
-  });
-}
-
-const recheck = (
-    id: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<OrderResponse>> => {
-    return axiosInstance.post(
-      `/api/orders/${id}/recheck-inventory`,
-      undefined,options
-    );
-  }
-const getRecheckUrl = (id: number,) => {
-
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/orders/${id}/recheck-inventory`,
-    baseURL: '',
-
-
-  });
-}
-
-const check = (
-    id: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<OrderResponse>> => {
-    return axiosInstance.post(
-      `/api/orders/${id}/check-inventory`,
-      undefined,options
-    );
-  }
-const getCheckUrl = (id: number,) => {
-
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/orders/${id}/check-inventory`,
-    baseURL: '',
-
-
-  });
-}
-
-const cancel = (
-    id: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<OrderResponse>> => {
-    return axiosInstance.post(
-      `/api/orders/${id}/cancel`,
-      undefined,options
-    );
-  }
-const getCancelUrl = (id: number,) => {
-
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/orders/${id}/cancel`,
-    baseURL: '',
-
-
-  });
-}
-
-const listInboundRecords = (
-    params?: ListInboundRecordsParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<InboundResult[]>> => {
-    return axiosInstance.get(
-      `/api/inventory/inbounds`,{
+export const createProduct = async (productRequest: ProductRequest, options?: RequestInit) =>
+  parseResponse<ProductResponse>(await fetch("/backend/api/products", {
     ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-const getListInboundRecordsUrl = (params?: ListInboundRecordsParams,) => {
+    method: "POST",
+    headers: jsonHeaders(options),
+    body: JSON.stringify(productRequest),
+  }));
 
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/inventory/inbounds`,
-    baseURL: '',
-    params,
+export const list = async (params?: ListParams, options?: RequestInit) =>
+  parseResponse<OrderResponse[]>(await fetch(`/backend/api/orders${queryString(params)}`, { ...options, method: "GET" }));
 
-  });
-}
-
-const recordInbound = (
-    inboundRequest: InboundRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<InboundResult>> => {
-    return axiosInstance.post(
-      `/api/inventory/inbounds`,
-      inboundRequest,options
-    );
-  }
-const getRecordInboundUrl = () => {
-
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/inventory/inbounds`,
-    baseURL: '',
-
-
-  });
-}
-
-const login = (
-    loginRequest: LoginRequest, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<LoginResponse>> => {
-    return axiosInstance.post(
-      `/api/auth/login`,
-      loginRequest,options
-    );
-  }
-const getLoginUrl = () => {
-
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/auth/login`,
-    baseURL: '',
-
-
-  });
-}
-
-const detail = (
-    id: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<OrderResponse>> => {
-    return axiosInstance.get(
-      `/api/orders/${id}`,options
-    );
-  }
-const getDetailUrl = (id: number,) => {
-
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/orders/${id}`,
-    baseURL: '',
-
-
-  });
-}
-
-const abnormal = (
-    params?: AbnormalParams, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<OrderResponse[]>> => {
-    return axiosInstance.get(
-      `/api/orders/abnormal`,{
+export const create = async (createOrderRequest: CreateOrderRequest, options?: RequestInit) =>
+  parseResponse<OrderResponse>(await fetch("/backend/api/orders", {
     ...options,
-        params: {...params, ...options?.params},}
-    );
-  }
-const getAbnormalUrl = (params?: AbnormalParams,) => {
+    method: "POST",
+    headers: jsonHeaders(options),
+    body: JSON.stringify(createOrderRequest),
+  }));
 
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/orders/abnormal`,
-    baseURL: '',
-    params,
+export const recheck = async (id: number, options?: RequestInit) =>
+  parseResponse<OrderResponse>(await fetch(`/backend/api/orders/${id}/recheck-inventory`, { ...options, method: "POST" }));
 
-  });
-}
+export const check = async (id: number, options?: RequestInit) =>
+  parseResponse<OrderResponse>(await fetch(`/backend/api/orders/${id}/check-inventory`, { ...options, method: "POST" }));
 
-const listInventory = (
-     options?: AxiosRequestConfig
- ): Promise<AxiosResponse<InventoryProjection[]>> => {
-    return axiosInstance.get(
-      `/api/inventory`,options
-    );
-  }
-const getListInventoryUrl = () => {
+export const cancel = async (id: number, options?: RequestInit) =>
+  parseResponse<OrderResponse>(await fetch(`/backend/api/orders/${id}/cancel`, { ...options, method: "POST" }));
 
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/inventory`,
-    baseURL: '',
+export const listInboundRecords = async (params?: ListInboundRecordsParams, options?: RequestInit) =>
+  parseResponse<InboundResult[]>(await fetch(`/backend/api/inventory/inbounds${queryString(params)}`, { ...options, method: "GET" }));
 
+export const recordInbound = async (inboundRequest: InboundRequest, options?: RequestInit) =>
+  parseResponse<InboundResult>(await fetch("/backend/api/inventory/inbounds", {
+    ...options,
+    method: "POST",
+    headers: jsonHeaders(options),
+    body: JSON.stringify(inboundRequest),
+  }));
 
-  });
-}
+export const login = async (loginRequest: LoginRequest, options?: RequestInit) =>
+  parseResponse<LoginResponse>(await fetch("/backend/api/auth/login", {
+    ...options,
+    method: "POST",
+    headers: jsonHeaders(options),
+    body: JSON.stringify(loginRequest),
+  }));
 
-const inventoryForProduct = (
-    productId: number, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<InventoryProjection>> => {
-    return axiosInstance.get(
-      `/api/inventory/${productId}`,options
-    );
-  }
-const getInventoryForProductUrl = (productId: number,) => {
+export const detail = async (id: number, options?: RequestInit) =>
+  parseResponse<OrderResponse>(await fetch(`/backend/api/orders/${id}`, { ...options, method: "GET" }));
 
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/inventory/${productId}`,
-    baseURL: '',
+export const abnormal = async (params?: AbnormalParams, options?: RequestInit) =>
+  parseResponse<OrderResponse[]>(await fetch(`/backend/api/orders/abnormal${queryString(params)}`, { ...options, method: "GET" }));
 
+export const listInventory = async (options?: RequestInit) =>
+  parseResponse<InventoryProjection[]>(await fetch("/backend/api/inventory", { ...options, method: "GET" }));
 
-  });
-}
+export const inventoryForProduct = async (productId: number, options?: RequestInit) =>
+  parseResponse<InventoryProjection>(await fetch(`/backend/api/inventory/${productId}`, { ...options, method: "GET" }));
 
-const currentUser = (
-     options?: AxiosRequestConfig
- ): Promise<AxiosResponse<UserResponse>> => {
-    return axiosInstance.get(
-      `/api/auth/me`,options
-    );
-  }
-const getCurrentUserUrl = () => {
-
-  return axiosInstance.create({
-    baseURL: '',
-    params: null,
-  }).getUri({
-    url: `/api/auth/me`,
-    baseURL: '',
-
-
-  });
-}
-
-return {getProduct,updateProduct,deleteProduct,listProducts,createProduct,list,create,recheck,check,cancel,listInboundRecords,recordInbound,login,detail,abnormal,listInventory,inventoryForProduct,currentUser,getGetProductUrl,getUpdateProductUrl,getDeleteProductUrl,getListProductsUrl,getCreateProductUrl,getListUrl,getCreateUrl,getRecheckUrl,getCheckUrl,getCancelUrl,getListInboundRecordsUrl,getRecordInboundUrl,getLoginUrl,getDetailUrl,getAbnormalUrl,getListInventoryUrl,getInventoryForProductUrl,getCurrentUserUrl}};
-export type GetProductResult = AxiosResponse<ProductResponse>
-export type UpdateProductResult = AxiosResponse<ProductResponse>
-export type DeleteProductResult = AxiosResponse<void>
-export type ListProductsResult = AxiosResponse<ProductResponse[]>
-export type CreateProductResult = AxiosResponse<ProductResponse>
-export type ListResult = AxiosResponse<OrderResponse[]>
-export type CreateResult = AxiosResponse<OrderResponse>
-export type RecheckResult = AxiosResponse<OrderResponse>
-export type CheckResult = AxiosResponse<OrderResponse>
-export type CancelResult = AxiosResponse<OrderResponse>
-export type ListInboundRecordsResult = AxiosResponse<InboundResult[]>
-export type RecordInboundResult = AxiosResponse<InboundResult>
-export type LoginResult = AxiosResponse<LoginResponse>
-export type DetailResult = AxiosResponse<OrderResponse>
-export type AbnormalResult = AxiosResponse<OrderResponse[]>
-export type ListInventoryResult = AxiosResponse<InventoryProjection[]>
-export type InventoryForProductResult = AxiosResponse<InventoryProjection>
-export type CurrentUserResult = AxiosResponse<UserResponse>
+export const currentUser = async (options?: RequestInit) =>
+  parseResponse<UserResponse>(await fetch("/backend/api/auth/me", { ...options, method: "GET" }));

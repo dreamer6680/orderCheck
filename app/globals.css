@@ -164,9 +164,31 @@
   }
 }
 
-/* 桌面端内容区跟随侧栏展开状态，移动端保持全宽。 */
+/* 内容区为固定侧栏预留空间，并在收起时同步缩窄；移动端为底部导航留出安全空间。 */
+.app-content {
+  min-width: 0;
+  padding-bottom: 68px;
+  /* Match page backgrounds in the space reserved for the fixed mobile navigation. */
+  background-color: #f7f8fa;
+}
+
+body:has(.login-page) .app-content {
+  padding-bottom: 0;
+  background-color: transparent;
+}
+
 @media (min-width: 1024px) {
-  body[data-sidebar-collapsed='true'] main {
-    margin-left: 72px !important;
+  body:has(.login-page) .app-content {
+    margin-left: 0;
+  }
+
+  .app-content {
+    margin-left: 238px;
+    padding-bottom: 0;
+    transition: margin-left 200ms ease;
+  }
+
+  body[data-sidebar-collapsed='true'] .app-content {
+    margin-left: 72px;
   }
 }

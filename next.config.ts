@@ -1,4 +1,3 @@
-import { withNextLocator } from "@next-locator/babel-plugin/dist/config.mjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -8,6 +7,26 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  reactStrictMode:false,
+  // LocatorJS runtime only provides the UI. This development-only transform
+  // attaches the JSX source positions required to open the original file.
+  // Do not apply it to node_modules or production builds.
+  turbopack: {
+    rules: {
+      '*.tsx': {
+        condition: {
+          all: ['development', { not: 'foreign' }],
+        },
+        loaders: ['@locator/webpack-loader'],
+      },
+      '*.jsx': {
+        condition: {
+          all: ['development', { not: 'foreign' }],
+        },
+        loaders: ['@locator/webpack-loader'],
+      },
+    },
+  },
 };
 
-export default withNextLocator(nextConfig);
+export default nextConfig;

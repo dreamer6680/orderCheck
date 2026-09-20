@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertCircle, CheckCircle2, Info, XCircle } from 'lucide-react'
-import { useNotificationStore } from '@/lib/store'
+import { useNotificationStore } from '@/lib/store/notificationStore'
 
 export function Notifications() {
   const { notifications, removeNotification } = useNotificationStore()
