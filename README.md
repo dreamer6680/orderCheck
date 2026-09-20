@@ -154,7 +154,7 @@ pnpm dev
 | GET | `/api/orders/abnormal` | 查询异常订单 |
 | GET、POST | `/api/inventory/inbounds` | 查询、登记入库 |
 | GET | `/api/inventory/quantities` | 查看库存数量 |
-| GET、POST | `/api/outbound-records` | 查询出库任务（POST 的具体操作使用相应子路径） |
+| GET | `/api/outbound-records` | 查询出库任务 |
 | GET | `/api/outbound-records/{id}/check-inventory` | 核查出库可执行性 |
 | POST | `/api/outbound-records/{id}/complete` | 确认出库 |
 | GET | `/api/dashboard/warehouse-progress` | 仓库执行进度统计 |
