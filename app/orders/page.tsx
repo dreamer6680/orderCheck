@@ -129,7 +129,7 @@ export default function OrdersPage() {
   };
 
   return (
-    <main className="min-w-0 bg-[#f7f8fa]">
+    <main className="min-h-screen min-w-0 bg-[#f7f8fa]">
       <div className="mx-auto max-w-[1440px] p-4 sm:p-6 lg:p-9">
         <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
